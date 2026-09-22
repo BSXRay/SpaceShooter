@@ -28,9 +28,8 @@ public class Shooter extends Actor
      * @param  y   ein Beispiel-Parameter für eine Methode
      * @return     irgendeine Zahl
      */
-    public int sampleMethod(int y)
+    public void testMethode()
     {
         // Ergänzen Sie Ihren Quelltext hier...
-        return PosX + y;
     }
 }

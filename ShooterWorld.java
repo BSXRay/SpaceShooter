@@ -16,6 +16,6 @@ public class ShooterWorld extends World
     public ShooterWorld()
     {    
         // Erstellt eine neue Welt mit 600x400 Zellen und einer Zell-Größe von 1x1 Pixeln.
-        super(600, 400, 1); 
+        super(600, 800, 1); 
     }
 }
