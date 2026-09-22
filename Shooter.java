@@ -1,33 +1,56 @@
 /**
- * @author Bastian, Lenius 
- * @version 0.0.1-alpha
+ * Der Shooter ist das Raumschiff des Spielers.
+ * Er wird mit den Pfeiltasten (links/rechts) gesteuert
+ * und kann am unteren Rand von Rand zu Rand fahren.
  */
 import greenfoot.*;
 
 public class Shooter extends Actor
 {
-    // Attribute -  ersetzen Sie das Beispiel hier mit ihren eigenen Attributen
-    int Punkte; 
-    int Leben;
-    int PosX;
-    int Geschwindigkeit;
+    private int Leben;
+    private int Geschwindigkeit;
 
-    /**
-     * Konstruktor für Objekte der Klasse Shooter
-     */
     public Shooter()
     {
+        Leben = 3;
+        Geschwindigkeit = 4;
     }
 
-    /**
-     * Ein Beispiel für eine Methode - ersetzen Sie diesen
-     * Kommentar durch Ihren eigenen.
-     * 
-     * @param  y   ein Beispiel-Parameter für eine Methode
-     * @return     irgendeine Zahl
-     */
-    public void testMethode()
+    public void act()
     {
-        // Ergänzen Sie Ihren Quelltext hier...
+        bewegen();
+    }
+
+    private void bewegen()
+    {
+        if (Greenfoot.isKeyDown("left"))
+        {
+            setLocation(getX() - Geschwindigkeit, getY());
+        }
+        if (Greenfoot.isKeyDown("right"))
+        {
+            setLocation(getX() + Geschwindigkeit, getY());
+        }
+        anGrenzePruefen();
+    }
+
+    private void anGrenzePruefen()
+    {
+        int halbeBreite = getImage().getWidth() / 2;
+        int weltBreite = getWorld().getWidth();
+
+        if (getX() < halbeBreite)
+        {
+            setLocation(halbeBreite, getY());
+        }
+        else if (getX() > weltBreite - halbeBreite)
+        {
+            setLocation(weltBreite - halbeBreite, getY());
+        }
+    }
+
+    public int getLeben()
+    {
+        return Leben;
     }
 }
