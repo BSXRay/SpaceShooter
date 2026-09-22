@@ -1,1 +1,0 @@
-this is a git over termux terminal test to commit my stuff in school!
