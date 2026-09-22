@@ -9,3 +9,5 @@ SpaceShooter ist für meine schule und ist ein goofy ahh greenfoot game
 <img width="384" height="337" alt="2grafik" src="https://github.com/user-attachments/assets/b3159c59-67e7-4d81-a6eb-e12ca03410d1" />
 <img width="384" height="337" alt="3grafik" src="https://github.com/user-attachments/assets/18d74584-965a-488f-8605-3e1ad2513fbe" />
 
+# License
+MIT
