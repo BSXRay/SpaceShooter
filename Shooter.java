@@ -14,6 +14,8 @@ public class Shooter extends Actor
     {
         Leben = 3;
         Geschwindigkeit = 4;
+        setImage("raumschiff.png");
+        getImage().scale(40, 30);
     }
 
     public void act()
