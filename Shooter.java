@@ -1,7 +1,7 @@
 /**
- * Der Shooter ist das Raumschiff des Spielers.
- * Er wird mit den Pfeiltasten (links/rechts) gesteuert
- * und kann am unteren Rand von Rand zu Rand fahren.
+ * Das Raumschiff des Spielers.
+ * Mit den Pfeiltasten faehrt es am unteren Rand von links nach rechts,
+ * mit der Leertaste schiesst es nach oben.
  */
 import greenfoot.*;
 
@@ -23,18 +23,21 @@ public class Shooter extends Actor
 
     public void act()
     {
+        // wird bei jedem Simulationsschritt aufgerufen
         bewegen();
         schiessen();
     }
 
     private void schiessen()
     {
+        // warten bis der Cooldown abgelaufen ist
         if (SchussCooldown > 0)
         {
             SchussCooldown--;
         }
         if (Greenfoot.isKeyDown("space") && SchussCooldown == 0)
         {
+            // Geschoss direkt ueber dem Schiff spawnen
             getWorld().addObject(new Geschosse(), getX(), getY() - getImage().getHeight() / 2 - 5);
             SchussCooldown = SCHUSS_ABSTAND;
         }
@@ -42,6 +45,7 @@ public class Shooter extends Actor
 
     private void bewegen()
     {
+        // Pfeiltasten links/rechts
         if (Greenfoot.isKeyDown("left"))
         {
             setLocation(getX() - Geschwindigkeit, getY());
@@ -55,6 +59,7 @@ public class Shooter extends Actor
 
     private void anGrenzePruefen()
     {
+        // verhindert, dass das Schiff aus dem Bild faehrt
         int halbeBreite = getImage().getWidth() / 2;
         int weltBreite = getWorld().getWidth();
 

@@ -1,6 +1,7 @@
 /**
- * Ein Geschoss, das vom Shooter abgefeuert wird.
- * Es bewegt sich gerade nach oben, bis es die Welt verlaesst.
+ * Das Projektil des Spielers.
+ * Wird vom Shooter abgefeuert und fliegt gerade nach oben,
+ * bis es den oberen Rand erreicht.
  */
 import greenfoot.*;
 
@@ -30,6 +31,7 @@ public class Geschosse extends Actor
 
     private void amRandEntfernen()
     {
+        // oben angekommen, dann loeschen
         if (getY() <= getImage().getHeight() / 2)
         {
             getWorld().removeObject(this);
@@ -38,6 +40,7 @@ public class Geschosse extends Actor
 
     public int getStaerke()
     {
+        // wird spaeter fuer den Schaden gebraucht
         return Staerke;
     }
 }

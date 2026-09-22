@@ -13,13 +13,13 @@ public class ShooterWorld extends World
      */
     public ShooterWorld()
     {    
-        // Erstellt eine neue Welt mit 600x800 Zellen und einer Zell-Größe von 1x1 Pixeln.
+        // 600 breit, 800 hoch
         super(600, 800, 1);
         erzeugeStartbelegung();
     }
 
     /**
-     * Erzeugt den Shooter unten mittig, 20 Pixel vom unteren Rand entfernt.
+     * Platziert den Shooter unten in der Mitte.
      */
     public void erzeugeStartbelegung()
     {
