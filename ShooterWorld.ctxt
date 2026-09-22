@@ -1,6 +1,6 @@
 #BlueJ class context
 comment0.target=ShooterWorld
-comment0.text=\r\n\ Erg\u00E4nzen\ Sie\ hier\ eine\ Beschreibung\ f\u00FCr\ die\ Klasse\ MyWorld.\r\n\ \r\n\ @author\ (Ihr\ Name)\ \r\n\ @version\ (eine\ Versionsnummer\ oder\ ein\ Datum)\r\n
+comment0.text=\r\n\ @author\ Bastian,\ Lenius\ \r\n\ @version\ 0.0.1-alpha\r\n
 comment1.params=
 comment1.target=ShooterWorld()
 comment1.text=\r\n\ Konstruktor\ f\u00FCr\ Objekte\ der\ Klasse\ MyWorld\r\n\ \r\n

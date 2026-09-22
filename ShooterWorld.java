@@ -1,10 +1,8 @@
 import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot und MouseInfo)
 
 /**
- * Ergänzen Sie hier eine Beschreibung für die Klasse MyWorld.
- * 
- * @author (Ihr Name) 
- * @version (eine Versionsnummer oder ein Datum)
+ * @author Bastian, Lenius 
+ * @version 0.0.1-alpha
  */
 public class ShooterWorld extends World
 {

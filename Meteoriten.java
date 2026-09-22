@@ -1,8 +1,6 @@
 /**
- * Ergänzen Sie hier eine Beschreibung für die Klasse Meteoriten.
- * 
- * @author (Ihr Name) 
- * @version (eine Versionsnummer oder ein Datum)
+ * @author Bastian, Lenius 
+ * @version 0.0.1-alpha
  */
 import greenfoot.*;
 
