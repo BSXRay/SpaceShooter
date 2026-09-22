@@ -1,32 +1,43 @@
 /**
- * @author Bastian, Lenius 
- * @version 0.0.1-alpha
+ * Ein Geschoss, das vom Shooter abgefeuert wird.
+ * Es bewegt sich gerade nach oben, bis es die Welt verlaesst.
  */
 import greenfoot.*;
 
 public class Geschosse extends Actor
 {
-    // Attribute -  ersetzen Sie das Beispiel hier mit ihren eigenen Attributen
-    int Stärke;
-    int Geschwindigkeit;
-    int PosY;
+    private int Geschwindigkeit;
+    private int Staerke;
 
-    /**
-     * Konstruktor für Objekte der Klasse Geschosse
-     */
     public Geschosse()
     {
+        Geschwindigkeit = 10;
+        Staerke = 1;
+        setImage("geschoss.png");
+        getImage().scale(40, 30);
     }
 
-    /**
-     * Ein Beispiel für eine Methode - ersetzen Sie diesen
-     * Kommentar durch Ihren eigenen.
-     * 
-     * @param  y   ein Beispiel-Parameter für eine Methode
-     * @return     irgendeine Zahl
-     */
-    public void testMethode()
+    public void act()
     {
-        // Ergänzen Sie Ihren Quelltext hier...
+        bewegeNachOben();
+        amRandEntfernen();
+    }
+
+    private void bewegeNachOben()
+    {
+        setLocation(getX(), getY() - Geschwindigkeit);
+    }
+
+    private void amRandEntfernen()
+    {
+        if (getY() <= getImage().getHeight() / 2)
+        {
+            getWorld().removeObject(this);
+        }
+    }
+
+    public int getStaerke()
+    {
+        return Staerke;
     }
 }

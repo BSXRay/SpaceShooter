@@ -8,7 +8,7 @@ public class ShooterWorld extends World
 {
 
     /**
-     * Konstruktor für Objekte der Klasse MyWorld
+     * Konstruktor für Objekte der Klasse ShooterWorld
      * 
      */
     public ShooterWorld()

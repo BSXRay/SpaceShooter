@@ -1,11 +1,17 @@
 #Greenfoot project file
 class.ShooterWorld.image=corkboard.jpg
-editor.fx.0.height=1168
-editor.fx.0.width=2152
-editor.fx.0.x=-7
-editor.fx.0.y=-7
+dependency1.from=ShooterWorld
+dependency1.to=Shooter
+dependency1.type=UsesDependency
+dependency2.from=Shooter
+dependency2.to=Geschosse
+dependency2.type=UsesDependency
+editor.fx.0.height=0
+editor.fx.0.width=0
+editor.fx.0.x=0
+editor.fx.0.y=0
 height=1168
-package.numDependencies=0
+package.numDependencies=2
 package.numTargets=5
 project.charset=UTF-8
 publish.hasSource=false
