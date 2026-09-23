@@ -14,7 +14,7 @@ public class Shooter extends Actor
 
     public Shooter()
     {
-        Leben = 3;
+        Leben = 5;
         Geschwindigkeit = 4;
         SchussCooldown = 0;
         setImage("shooter.png");
@@ -26,6 +26,7 @@ public class Shooter extends Actor
         // wird bei jedem Simulationsschritt aufgerufen
         bewegen();
         schiessen();
+        lebenAnzeigen();
     }
 
     private void schiessen()
@@ -79,6 +80,17 @@ public class Shooter extends Actor
         {
             setLocation(weltBreite - halbeBreite, getY());
         }
+    }
+
+    private void lebenAnzeigen()
+    {
+        // der aktuelle Lebenstand oben links
+        getWorld().showText("LIVES: " + Leben, 70, 30);
+    }
+
+    public void verliereLeben(int anzahl)
+    {
+        Leben = Leben - anzahl;
     }
 
     public int getLeben()

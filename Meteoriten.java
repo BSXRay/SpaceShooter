@@ -1,32 +1,57 @@
 /**
- * @author Bastian, Lenius 
- * @version 0.0.1-alpha
+ * A meteor that falls down from the top.
+ * It is not controlled by the player and
+ * costs 2 lives when it hits the ship.
  */
 import greenfoot.*;
 
 public class Meteoriten extends Actor
 {
-    // Attribute -  ersetzen Sie das Beispiel hier mit ihren eigenen Attributen
-    int Stärke; 
-    int Geschwindigkeit;
-    int PosY;
+    private int speed;
+    private int damage;
 
-    /**
-     * Konstruktor für Objekte der Klasse Meteoriten
-     */
     public Meteoriten()
     {
+        speed = 3;
+        damage = 2;
+        setImage("meteorite.png");
+        getImage().scale(60, 60);
     }
 
-    /**
-     * Ein Beispiel für eine Methode - ersetzen Sie diesen
-     * Kommentar durch Ihren eigenen.
-     * 
-     * @param  y   ein Beispiel-Parameter für eine Methode
-     * @return     irgendeine Zahl
-     */
-    public void testMethode()
+    public void act()
     {
-        // Ergänzen Sie Ihren Quelltext hier...
+        moveDown();
+        checkShipHit();
+        // after a hit the meteor is already removed, so skip the rest
+        if (getWorld() != null)
+        {
+            removeAtBottom();
+        }
+    }
+
+    private void moveDown()
+    {
+        // move straight downwards
+        setLocation(getX(), getY() + speed);
+    }
+
+    private void checkShipHit()
+    {
+        // if it touches the ship, take lives and remove the meteor
+        Shooter ship = (Shooter) getOneIntersectingObject(Shooter.class);
+        if (ship != null)
+        {
+            ship.verliereLeben(damage);
+            getWorld().removeObject(this);
+        }
+    }
+
+    private void removeAtBottom()
+    {
+        // below the bottom edge, the meteor is gone
+        if (getY() > getWorld().getHeight() + getImage().getHeight() / 2)
+        {
+            getWorld().removeObject(this);
+        }
     }
 }

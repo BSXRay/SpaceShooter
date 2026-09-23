@@ -54,6 +54,12 @@ public class ShooterWorld extends World
         {
             pWarGedrueckt = false;
         }
+
+        // from time to time drop a meteor at a random x position
+        if (Greenfoot.getRandomNumber(100) < 2)
+        {
+            addObject(new Meteoriten(), Greenfoot.getRandomNumber(getWidth()), 10);
+        }
     }
 
     /**
@@ -61,6 +67,6 @@ public class ShooterWorld extends World
      */
     public void erzeugeStartbelegung()
     {
-        addObject(new Shooter(), getWidth() / 2, getHeight() - 50);
+        addObject(new Shooter(), getWidth() / 2, getHeight() - 60);
     }
 }
