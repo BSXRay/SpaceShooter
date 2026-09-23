@@ -1,25 +1,59 @@
-import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot und MouseInfo)
+import greenfoot.*;
 
 /**
- * @author Bastian, Lenius 
+ * @author Bastian, Lenius
  * @version 0.0.1-alpha
  */
 public class ShooterWorld extends World
 {
+    private GreenfootSound musik;
+    private boolean musikGestartet = false;
+    private boolean pWarGedrueckt = false;
 
-    /**
-     * Konstruktor für Objekte der Klasse ShooterWorld
-     * 
-     */
     public ShooterWorld()
-    {    
-        // 600 breit, 800 hoch
+    {
+        // 600 breit, 900 hoch
         super(600, 900, 1);
+
         erzeugeStartbelegung();
+
         GreenfootImage hintergrund = new GreenfootImage("backg.png");
         hintergrund.scale(getWidth(), getHeight());
-
         setBackground(hintergrund);
+
+        musik = new GreenfootSound("Background_music.mp3");
+        musik.setVolume(40);
+    }
+
+    public void act()
+    {
+        // Musik beim ersten act() starten
+        if (!musikGestartet)
+        {
+            musik.playLoop();
+            musikGestartet = true;
+        }
+
+        // P-Taste zum Pausieren / Fortsetzen
+        if (Greenfoot.isKeyDown("p") && !pWarGedrueckt)
+        {
+            if (musik.isPlaying())
+            {
+                musik.pause();
+            }
+            else
+            {
+                musik.playLoop();
+            }
+
+            pWarGedrueckt = true;
+        }
+
+        // Warten, bis P losgelassen wurde
+        if (!Greenfoot.isKeyDown("p"))
+        {
+            pWarGedrueckt = false;
+        }
     }
 
     /**
