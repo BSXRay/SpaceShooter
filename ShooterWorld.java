@@ -14,8 +14,12 @@ public class ShooterWorld extends World
     public ShooterWorld()
     {    
         // 600 breit, 800 hoch
-        super(700, 900, 1);
+        super(600, 900, 1);
         erzeugeStartbelegung();
+        GreenfootImage hintergrund = new GreenfootImage("backg.png");
+        hintergrund.scale(getWidth(), getHeight());
+
+        setBackground(hintergrund);
     }
 
     /**
