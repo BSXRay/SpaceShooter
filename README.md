@@ -13,12 +13,122 @@ git clone https://github.com/BSXRay/SpaceShooter
 * **A** | **<-** Left
 * **D** | **->** Right
 * **P** | Pause/resume the music
-# class diagram
 
-<img width="384" height="337" alt="grafik" src="https://github.com/user-attachments/assets/ebef7af2-37c2-4f72-9f11-3a8302c2e360" />
-<img width="384" height="337" alt="1grafik" src="https://github.com/user-attachments/assets/5adbb6ab-b728-4ddd-8ef4-2547d7c6d277" />
-<img width="384" height="337" alt="2grafik" src="https://github.com/user-attachments/assets/b3159c59-67e7-4d81-a6eb-e12ca03410d1" />
-<img width="384" height="337" alt="3grafik" src="https://github.com/user-attachments/assets/18d74584-965a-488f-8605-3e1ad2513fbe" />
+# Class Diagram - SpaceShooter
 
+**Info:** `+` public, `-` private, `#` protected
+
+## Shooter *(extends Actor)*
+
+### Attributes
+
+| Visibility | Type | Name |
+|------------|------|------|
+| `-` | int | lives |
+| `-` | int | speed |
+| `-` | int | shotCooldown |
+| `-` | int | SHOT_DELAY |
+
+### Methods
+
+| Visibility | Return | Signature |
+|------------|--------|-----------|
+| `+` | - | Shooter() |
+| `+` | void | act() |
+| `-` | void | move() |
+| `-` | void | shoot() |
+| `-` | void | checkEdge() |
+| `-` | void | updateLivesDisplay() |
+| `+` | void | loseLives(int amount) |
+| `+` | int | getLives() |
+
+## Bullet *(extends Actor)*
+
+### Attributes
+
+| Visibility | Type | Name |
+|------------|------|------|
+| `-` | int | speed |
+| `-` | int | strength |
+
+### Methods
+
+| Visibility | Return | Signature |
+|------------|--------|-----------|
+| `+` | - | Bullet() |
+| `+` | void | act() |
+| `-` | void | moveUp() |
+| `-` | void | playSound() |
+| `-` | void | removeAtTop() |
+| `+` | int | getStrength() |
+
+## Meteor *(extends Actor)*
+
+### Attributes
+
+| Visibility | Type | Name |
+|------------|------|------|
+| `-` | int | speed |
+| `-` | int | damage |
+
+### Methods
+
+| Visibility | Return | Signature |
+|------------|--------|-----------|
+| `+` | - | Meteor() |
+| `+` | void | act() |
+| `-` | void | moveDown() |
+| `-` | void | checkShipHit() |
+| `-` | void | removeAtBottom() |
+
+## Alien *(extends Actor, placeholder)*
+
+### Attributes
+
+| Visibility | Type | Name |
+|------------|------|------|
+| `-` | int | lives |
+| `-` | int | posX |
+| `-` | int | posY |
+
+### Methods
+
+| Visibility | Return | Signature |
+|------------|--------|-----------|
+| `+` | - | Alien() |
+| `+` | void | testMethod() |
+
+## ShooterWorld *(extends World)*
+
+### Attributes
+
+| Visibility | Type | Name |
+|------------|------|------|
+| `-` | GreenfootSound | music |
+| `-` | boolean | musicStarted |
+| `-` | boolean | pWasPressed |
+
+### Methods
+
+| Visibility | Return | Signature |
+|------------|--------|-----------|
+| `+` | - | ShooterWorld() |
+| `+` | void | act() |
+| `+` | void | setupStart() |
+
+## Relationships
+
+```
+Shooter      --|> Actor
+Bullet       --|> Actor
+Meteor       --|> Actor
+Alien        --|> Actor
+ShooterWorld --|> World
+
+ShooterWorld --> Shooter  (places ship on start)
+ShooterWorld --> Meteor   (spawns falling meteors)
+Shooter      --> Bullet   (fires when space is pressed)
+Meteor       --> Shooter  (calls loseLives on collision)
+```
 # License
 MIT
