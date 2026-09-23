@@ -88,6 +88,7 @@ public class Shooter extends Actor
         if (lives <= 0)
         {
             getWorld().showText("GAME OVER", getWorld().getWidth() / 2, getWorld().getHeight() / 2);
+            getWorld().showText("SCORE: " + score, getWorld().getWidth() / 2, getWorld().getHeight() / 2 + 30);
             Greenfoot.stop();
         }
     }
