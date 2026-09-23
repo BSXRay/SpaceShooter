@@ -78,6 +78,13 @@ public class Shooter extends Actor
     {
         // shows the current lives, top left corner
         getWorld().showText("LIVES: " + lives, 70, 30);
+
+        // no lives left, so the game is over
+        if (lives <= 0)
+        {
+            getWorld().showText("GAME OVER", getWorld().getWidth() / 2, getWorld().getHeight() / 2);
+            Greenfoot.stop();
+        }
     }
 
     public void loseLives(int amount)
