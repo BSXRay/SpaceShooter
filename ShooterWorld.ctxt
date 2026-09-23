@@ -1,11 +1,11 @@
 #BlueJ class context
 comment0.target=ShooterWorld
-comment0.text=\r\n\ @author\ Bastian,\ Lenius\r\n\ @version\ 0.0.1-alpha\r\n
+comment0.text=\r\n\ The\ game\ world.\ Holds\ the\ background,\ the\ music\r\n\ and\ spawns\ the\ meteors\ from\ the\ top.\r\n
 comment1.params=
 comment1.target=ShooterWorld()
 comment2.params=
 comment2.target=void\ act()
 comment3.params=
-comment3.target=void\ erzeugeStartbelegung()
-comment3.text=\r\n\ Platziert\ den\ Shooter\ unten\ in\ der\ Mitte.\r\n
+comment3.target=void\ setupStart()
+comment3.text=\r\n\ Places\ the\ ship\ at\ the\ bottom,\ nicely\ centered.\r\n
 numComments=4

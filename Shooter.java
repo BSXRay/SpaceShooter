@@ -1,100 +1,92 @@
 /**
- * Das Raumschiff des Spielers.
- * Mit den Pfeiltasten faehrt es am unteren Rand von links nach rechts,
- * mit der Leertaste schiesst es nach oben.
+ * The player's spaceship.
+ * Move it left and right with the arrow keys (or A/D) at the bottom,
+ * press space to shoot upwards. Shows the current lives top left.
  */
 import greenfoot.*;
 
 public class Shooter extends Actor
 {
-    private int Leben;
-    private int Geschwindigkeit;
-    private int SchussCooldown;
-    private static final int SCHUSS_ABSTAND = 12;
+    private int lives;
+    private int speed;
+    private int shotCooldown;
+    private static final int SHOT_DELAY = 12;
 
     public Shooter()
     {
-        Leben = 5;
-        Geschwindigkeit = 4;
-        SchussCooldown = 0;
+        lives = 3;
+        speed = 4;
+        shotCooldown = 0;
         setImage("shooter.png");
         getImage().scale(100, 120);
     }
 
     public void act()
     {
-        // wird bei jedem Simulationsschritt aufgerufen
-        bewegen();
-        schiessen();
-        lebenAnzeigen();
+        // called every simulation step
+        move();
+        shoot();
+        updateLivesDisplay();
     }
 
-    private void schiessen()
+    private void move()
     {
-        // warten bis der Cooldown abgelaufen ist
-        if (SchussCooldown > 0)
+        // arrow keys, and A/D as a bonus
+        if (Greenfoot.isKeyDown("left") || Greenfoot.isKeyDown("a"))
         {
-            SchussCooldown--;
+            setLocation(getX() - speed, getY());
         }
-        if (Greenfoot.isKeyDown("space") && SchussCooldown == 0)
+        if (Greenfoot.isKeyDown("right") || Greenfoot.isKeyDown("d"))
         {
-            // Geschoss direkt ueber dem Schiff spawnen
-            getWorld().addObject(new Geschosse(), getX(), getY() - getImage().getHeight() / 2 - 5);
-            SchussCooldown = SCHUSS_ABSTAND;
+            setLocation(getX() + speed, getY());
         }
+        checkEdge();
     }
 
-    private void bewegen()
+    private void shoot()
     {
-        // Pfeiltasten links/rechts
-        if (Greenfoot.isKeyDown("left"))
+        // wait until the cooldown is over
+        if (shotCooldown > 0)
         {
-            setLocation(getX() - Geschwindigkeit, getY());
+            shotCooldown--;
         }
-        else if (Greenfoot.isKeyDown("a"))
+        if (Greenfoot.isKeyDown("space") && shotCooldown == 0)
         {
-            setLocation(getX() - Geschwindigkeit, getY());
-        }
-        if (Greenfoot.isKeyDown("right"))
-        {
-            setLocation(getX() + Geschwindigkeit, getY());
-        }
-        else if (Greenfoot.isKeyDown("d"))
-        {
-            setLocation(getX() + Geschwindigkeit, getY());
-        }
-        anGrenzePruefen();
-    }
-
-    private void anGrenzePruefen()
-    {
-        // verhindert, dass das Schiff aus dem Bild faehrt
-        int halbeBreite = getImage().getWidth() / 2;
-        int weltBreite = getWorld().getWidth();
-
-        if (getX() < halbeBreite)
-        {
-            setLocation(halbeBreite, getY());
-        }
-        else if (getX() > weltBreite - halbeBreite)
-        {
-            setLocation(weltBreite - halbeBreite, getY());
+            // spawn the shot right above the ship
+            getWorld().addObject(new Bullet(), getX(), getY() - getImage().getHeight() / 2 - 5);
+            shotCooldown = SHOT_DELAY;
         }
     }
 
-    private void lebenAnzeigen()
+    private void checkEdge()
     {
-        // der aktuelle Lebenstand oben links
-        getWorld().showText("LIVES: " + Leben, 70, 30);
+        // keeps the ship inside the world
+        int halfWidth = getImage().getWidth() / 2;
+        int worldWidth = getWorld().getWidth();
+
+        if (getX() < halfWidth)
+        {
+            setLocation(halfWidth, getY());
+        }
+        else if (getX() > worldWidth - halfWidth)
+        {
+            setLocation(worldWidth - halfWidth, getY());
+        }
     }
 
-    public void verliereLeben(int anzahl)
+    private void updateLivesDisplay()
     {
-        Leben = Leben - anzahl;
+        // shows the current lives, top left corner
+        getWorld().showText("LIVES: " + lives, 70, 30);
     }
 
-    public int getLeben()
+    public void loseLives(int amount)
     {
-        return Leben;
+        lives = lives - amount;
+    }
+
+    public int getLives()
+    {
+        return lives;
     }
 }

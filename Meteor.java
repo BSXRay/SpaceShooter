@@ -5,12 +5,12 @@
  */
 import greenfoot.*;
 
-public class Meteoriten extends Actor
+public class Meteor extends Actor
 {
     private int speed;
     private int damage;
 
-    public Meteoriten()
+    public Meteor()
     {
         speed = 3;
         damage = 2;
@@ -41,15 +41,15 @@ public class Meteoriten extends Actor
         Shooter ship = (Shooter) getOneIntersectingObject(Shooter.class);
         if (ship != null)
         {
-            ship.verliereLeben(damage);
+            ship.loseLives(damage);
             getWorld().removeObject(this);
         }
     }
 
     private void removeAtBottom()
     {
-        // below the bottom edge, the meteor is gone
-        if (getY() > getWorld().getHeight() + getImage().getHeight() / 2)
+        // as soon as the meteor reaches the bottom edge, remove it
+        if (getY() - getImage().getHeight() / 2 >= getWorld().getHeight())
         {
             getWorld().removeObject(this);
         }

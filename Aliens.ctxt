@@ -1,9 +1,0 @@
-#BlueJ class context
-comment0.target=Aliens
-comment1.params=
-comment1.target=Aliens()
-comment1.text=\r\n\ Konstruktor\ f\u00FCr\ Objekte\ der\ Klasse\ Alienst\r\n
-comment2.params=
-comment2.target=void\ testMethode()
-comment2.text=\r\n\ Ein\ Beispiel\ f\u00FCr\ eine\ Methode\ -\ ersetzen\ Sie\ diesen\r\n\ Kommentar\ durch\ Ihren\ eigenen.\r\n\ \r\n\ @param\ \ y\ \ \ ein\ Beispiel-Parameter\ f\u00FCr\ eine\ Methode\r\n\ @return\ \ \ \ \ irgendeine\ Zahl\r\n
-numComments=3

@@ -1,71 +1,71 @@
 import greenfoot.*;
 
 /**
- * @author Bastian, Lenius
- * @version 0.0.1-alpha
+ * The game world. Holds the background, the music
+ * and spawns the meteors from the top.
  */
 public class ShooterWorld extends World
 {
-    private GreenfootSound musik;
-    private boolean musikGestartet = false;
-    private boolean pWarGedrueckt = false;
+    private GreenfootSound music;
+    private boolean musicStarted = false;
+    private boolean pWasPressed = false;
 
     public ShooterWorld()
     {
-        // 600 breit, 900 hoch
+        // 600 wide, 900 tall
         super(600, 900, 1);
 
-        erzeugeStartbelegung();
+        setupStart();
 
-        GreenfootImage hintergrund = new GreenfootImage("backg.png");
-        hintergrund.scale(getWidth(), getHeight());
-        setBackground(hintergrund);
+        GreenfootImage background = new GreenfootImage("backg.png");
+        background.scale(getWidth(), getHeight());
+        setBackground(background);
 
-        musik = new GreenfootSound("Background_music.mp3");
-        musik.setVolume(40);
+        music = new GreenfootSound("Background_music.mp3");
+        music.setVolume(40);
     }
 
     public void act()
     {
-        // Musik beim ersten act() starten
-        if (!musikGestartet)
+        // start the music on the first act()
+        if (!musicStarted)
         {
-            musik.playLoop();
-            musikGestartet = true;
+            music.playLoop();
+            musicStarted = true;
         }
 
-        // P-Taste zum Pausieren / Fortsetzen
-        if (Greenfoot.isKeyDown("p") && !pWarGedrueckt)
+        // P toggles pause / resume
+        if (Greenfoot.isKeyDown("p") && !pWasPressed)
         {
-            if (musik.isPlaying())
+            if (music.isPlaying())
             {
-                musik.pause();
+                music.pause();
             }
             else
             {
-                musik.playLoop();
+                music.playLoop();
             }
 
-            pWarGedrueckt = true;
+            pWasPressed = true;
         }
 
-        // Warten, bis P losgelassen wurde
+        // wait until P is released again
         if (!Greenfoot.isKeyDown("p"))
         {
-            pWarGedrueckt = false;
+            pWasPressed = false;
         }
 
         // from time to time drop a meteor at a random x position
         if (Greenfoot.getRandomNumber(100) < 2)
         {
-            addObject(new Meteoriten(), Greenfoot.getRandomNumber(getWidth()), 10);
+            addObject(new Meteor(), Greenfoot.getRandomNumber(getWidth()), 10);
         }
     }
 
     /**
-     * Platziert den Shooter unten in der Mitte.
+     * Places the ship at the bottom, nicely centered.
      */
-    public void erzeugeStartbelegung()
+    public void setupStart()
     {
         addObject(new Shooter(), getWidth() / 2, getHeight() - 60);
     }
