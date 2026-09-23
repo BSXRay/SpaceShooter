@@ -10,13 +10,16 @@ public class Shooter extends Actor
     private int lives;
     private int speed;
     private int shotCooldown;
+    private int score;
     private static final int SHOT_DELAY = 12;
+    private static final int MAX_LIVES = 3;
 
     public Shooter()
     {
         lives = 3;
         speed = 4;
         shotCooldown = 0;
+        score = 0;
         setImage("shooter.png");
         getImage().scale(100, 120);
     }
@@ -78,6 +81,8 @@ public class Shooter extends Actor
     {
         // shows the current lives, top left corner
         getWorld().showText("LIVES: " + lives, 70, 30);
+        // shows the score, top right corner
+        getWorld().showText("SCORE: " + score, getWorld().getWidth() - 70, 30);
 
         // no lives left, so the game is over
         if (lives <= 0)
@@ -95,5 +100,25 @@ public class Shooter extends Actor
     public int getLives()
     {
         return lives;
+    }
+
+    public void addLife(int amount)
+    {
+        lives = lives + amount;
+        // never go above the maximum
+        if (lives > MAX_LIVES)
+        {
+            lives = MAX_LIVES;
+        }
+    }
+
+    public void addScore(int amount)
+    {
+        score = score + amount;
+        // the score never goes below zero
+        if (score < 0)
+        {
+            score = 0;
+        }
     }
 }

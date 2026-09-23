@@ -60,6 +60,12 @@ public class ShooterWorld extends World
         {
             addObject(new Meteor(), Greenfoot.getRandomNumber(getWidth()), 10);
         }
+
+        // and now and then a UFO alien comes down
+        if (Greenfoot.getRandomNumber(100) < 2)
+        {
+            addObject(new Alien(), Greenfoot.getRandomNumber(getWidth()), 10);
+        }
     }
 
     /**

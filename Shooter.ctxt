@@ -2,6 +2,8 @@
 comment0.target=Shooter
 comment1.params=
 comment1.target=Shooter()
+comment10.params=amount
+comment10.target=void\ addScore(int)
 comment2.params=
 comment2.target=void\ act()
 comment3.params=
@@ -16,4 +18,6 @@ comment7.params=amount
 comment7.target=void\ loseLives(int)
 comment8.params=
 comment8.target=int\ getLives()
-numComments=9
+comment9.params=amount
+comment9.target=void\ addLife(int)
+numComments=11
