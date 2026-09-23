@@ -1,7 +1,8 @@
 /**
  * A UFO that flies left and right on the x axis
  * while moving slowly down towards the player.
- * Shooting it gives one life back and adds one point.
+ * It needs 3 hits to be destroyed, shooting it
+ * then gives one life back and adds one point.
  */
 import greenfoot.*;
 
@@ -9,11 +10,18 @@ public class Alien extends Actor
 {
     private int speedX;
     private int speedY;
+    private int lives;
 
     public Alien()
     {
         speedX = 3;
         speedY = 2;
+        lives = 3;
+        // random starting direction, so it looks a bit chaotic
+        if (Greenfoot.getRandomNumber(2) == 0)
+        {
+            speedX = -speedX;
+        }
         setImage("alien_1.png");
         getImage().scale(80, 50);
     }
@@ -37,35 +45,51 @@ public class Alien extends Actor
     {
         // fly sideways and slowly downwards
         setLocation(getX() + speedX, getY() + speedY);
-    }
 
-    private void bounceAtEdges()
-    {
-        // change direction when reaching the left or right edge
-        int halfWidth = getImage().getWidth() / 2;
-        int worldWidth = getWorld().getWidth();
-        if (getX() <= halfWidth || getX() >= worldWidth - halfWidth)
+        // a bit of chaos: sometimes the alien suddenly turns around
+        if (Greenfoot.getRandomNumber(150) == 0)
         {
             speedX = -speedX;
         }
     }
 
+    private void bounceAtEdges()
+    {
+        // push the alien back inside and point it the right way
+        int halfWidth = getImage().getWidth() / 2;
+        int worldWidth = getWorld().getWidth();
+
+        if (getX() < halfWidth)
+        {
+            speedX = Math.abs(speedX);
+        }
+        else if (getX() > worldWidth - halfWidth)
+        {
+            speedX = -Math.abs(speedX);
+        }
+    }
+
     private void checkBulletHit()
     {
-        // a hit bullet removes the alien and rewards the player
+        // each hit takes one life, the alien dies after 3 hits
         Bullet bullet = (Bullet) getOneIntersectingObject(Bullet.class);
         if (bullet != null)
         {
-            Shooter ship = getWorld().getObjects(Shooter.class).isEmpty()
-                    ? null
-                    : (Shooter) getWorld().getObjects(Shooter.class).get(0);
-            if (ship != null)
-            {
-                ship.addLife(1);
-                ship.addScore(1);
-            }
             getWorld().removeObject(bullet);
-            getWorld().removeObject(this);
+            lives = lives - bullet.getStrength();
+            if (lives <= 0)
+            {
+                // destroyed: reward the player
+                Shooter ship = getWorld().getObjects(Shooter.class).isEmpty()
+                        ? null
+                        : (Shooter) getWorld().getObjects(Shooter.class).get(0);
+                if (ship != null)
+                {
+                    ship.addLife(1);
+                    ship.addScore(1);
+                }
+                getWorld().removeObject(this);
+            }
         }
     }
 
