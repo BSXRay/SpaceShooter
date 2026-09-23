@@ -50,7 +50,15 @@ public class Shooter extends Actor
         {
             setLocation(getX() - Geschwindigkeit, getY());
         }
+        else if (Greenfoot.isKeyDown("a"))
+        {
+            setLocation(getX() - Geschwindigkeit, getY());
+        }
         if (Greenfoot.isKeyDown("right"))
+        {
+            setLocation(getX() + Geschwindigkeit, getY());
+        }
+        else if (Greenfoot.isKeyDown("d"))
         {
             setLocation(getX() + Geschwindigkeit, getY());
         }
