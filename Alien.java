@@ -11,6 +11,9 @@ public class Alien extends Actor
     private int speedX;
     private int speedY;
     private int lives;
+    // smaller hitbox: hits only count right next to the alien's center
+    private static final int HIT_RANGE_X = 25;
+    private static final int HIT_RANGE_Y = 20;
 
     public Alien()
     {
@@ -73,7 +76,7 @@ public class Alien extends Actor
     {
         // each hit takes one life, the alien dies after 3 hits
         Bullet bullet = (Bullet) getOneIntersectingObject(Bullet.class);
-        if (bullet != null)
+        if (bullet != null && isWithinHitbox(bullet))
         {
             getWorld().removeObject(bullet);
             lives = lives - bullet.getStrength();
@@ -97,11 +100,19 @@ public class Alien extends Actor
     {
         // touching the ship costs one life
         Shooter ship = (Shooter) getOneIntersectingObject(Shooter.class);
-        if (ship != null)
+        if (ship != null && isWithinHitbox(ship))
         {
             penalizePlayer();
             getWorld().removeObject(this);
         }
+    }
+
+    private boolean isWithinHitbox(Actor other)
+    {
+        // small collision box around the middle of the alien
+        int dx = other.getX() - getX();
+        int dy = other.getY() - getY();
+        return Math.abs(dx) <= HIT_RANGE_X && Math.abs(dy) <= HIT_RANGE_Y;
     }
 
     private void removeAtBottom()
