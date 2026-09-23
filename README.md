@@ -9,7 +9,9 @@ git clone https://github.com/BSXRay/SpaceShooter
 ```
 4. Unzip the downloaded file
 5. Open the folder in Greenfoot
-
+# Controls
+* **A** | **<-** Left
+* **D** | **->** Right
 # class diagram
 
 <img width="384" height="337" alt="grafik" src="https://github.com/user-attachments/assets/ebef7af2-37c2-4f72-9f11-3a8302c2e360" />
