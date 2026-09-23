@@ -17,8 +17,8 @@ public class Shooter extends Actor
         Leben = 3;
         Geschwindigkeit = 4;
         SchussCooldown = 0;
-        setImage("raumschiff.png");
-        getImage().scale(40, 30);
+        setImage("raumschiff.gif");
+        getImage().scale(100, 120);
     }
 
     public void act()

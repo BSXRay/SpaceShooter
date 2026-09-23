@@ -15,7 +15,7 @@ public class Geschosse extends Actor
         Geschwindigkeit = 10;
         Staerke = 1;
         setImage("geschoss.png");
-        getImage().scale(40, 30);
+        getImage().scale(80, 60);
     }
 
     public void act()

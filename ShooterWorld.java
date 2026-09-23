@@ -23,6 +23,6 @@ public class ShooterWorld extends World
      */
     public void erzeugeStartbelegung()
     {
-        addObject(new Shooter(), getWidth() / 2, getHeight() - 20);
+        addObject(new Shooter(), getWidth() / 2, getHeight() - 50);
     }
 }
