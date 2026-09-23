@@ -29,7 +29,6 @@ public class Shooter extends Actor
         // called every simulation step
         move();
         shoot();
-        updateLivesDisplay();
     }
 
     private void move()
@@ -77,22 +76,6 @@ public class Shooter extends Actor
         }
     }
 
-    private void updateLivesDisplay()
-    {
-        // shows the current lives, top left corner
-        getWorld().showText("LIVES: " + lives, 70, 30);
-        // shows the score, top right corner
-        getWorld().showText("SCORE: " + score, getWorld().getWidth() - 70, 30);
-
-        // no lives left, so the game is over
-        if (lives <= 0)
-        {
-            getWorld().showText("GAME OVER", getWorld().getWidth() / 2, getWorld().getHeight() / 2);
-            getWorld().showText("SCORE: " + score, getWorld().getWidth() / 2, getWorld().getHeight() / 2 + 30);
-            Greenfoot.stop();
-        }
-    }
-
     public void loseLives(int amount)
     {
         lives = lives - amount;
@@ -101,6 +84,11 @@ public class Shooter extends Actor
     public int getLives()
     {
         return lives;
+    }
+
+    public int getScore()
+    {
+        return score;
     }
 
     public void addLife(int amount)

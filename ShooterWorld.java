@@ -12,6 +12,9 @@ public class ShooterWorld extends World
     private int difficulty = 0; // 0 = menu, 1 = easy, 2 = hard
     private int gameTicks = 0;
     private int meteorSpawnTimer = 0;
+    private GreenfootImage gameBackground;
+    private int lastLives = -1;
+    private int lastScore = -1;
 
     public ShooterWorld()
     {
@@ -21,13 +24,28 @@ public class ShooterWorld extends World
         // menu background, the game background is set later
         GreenfootImage background = new GreenfootImage("backg2.png");
         background.scale(getWidth(), getHeight());
-        setBackground(background);
 
-        // menu shown on the first start
-        showText("SPACE SHOOTER", getWidth() / 2, 180);
-        showText("press 1 for EASY", getWidth() / 2, 320);
-        showText("press 2 for HARD", getWidth() / 2, 370);
-        showText("TIP: in hard mode you can shoot the meteors", getWidth() / 2, 420);
+        // big text drawn directly on the menu background
+        background.setFont(new Font("Arial", true, false, 46));
+        background.setColor(Color.WHITE);
+        background.drawString("SPACE SHOOTER", centerX(background, "SPACE SHOOTER"), 150);
+
+        background.setFont(new Font("Arial", true, false, 26));
+        background.drawString("press 1 for EASY", centerX(background, "press 1 for EASY"), 320);
+        background.drawString("press 2 for HARD", centerX(background, "press 2 for HARD"), 370);
+
+        // the tip is a long text, so it gets a smaller font to fit
+        background.setFont(new Font("Arial", true, false, 20));
+        background.drawString("TIP: in hard mode you can shoot the meteors", centerX(background, "TIP: in hard mode you can shoot the meteors"), 430);
+
+        setBackground(background);
+    }
+
+    private int centerX(GreenfootImage image, String text)
+    {
+        // rough estimate to center the text horizontally
+        int textWidth = text.length() * (image.getFont().getSize() * 6 / 10);
+        return (image.getWidth() - textWidth) / 2;
     }
 
     public void act()
@@ -40,6 +58,8 @@ public class ShooterWorld extends World
         }
 
         gameTicks++;
+
+        updateHud();
 
         // start the music on the first act()
         if (!musicStarted)
@@ -93,6 +113,50 @@ public class ShooterWorld extends World
         }
     }
 
+    private void updateHud()
+    {
+        // redraws the HUD text onto a fresh copy of the game background
+        Shooter ship = getObjects(Shooter.class).isEmpty()
+                ? null
+                : (Shooter) getObjects(Shooter.class).get(0);
+        if (ship == null)
+        {
+            return;
+        }
+
+        // only redraw when lives or score changed, that saves a lot of work
+        if (ship.getLives() == lastLives && ship.getScore() == lastScore)
+        {
+            return;
+        }
+        lastLives = ship.getLives();
+        lastScore = ship.getScore();
+
+        GreenfootImage hud = new GreenfootImage(gameBackground);
+
+        hud.setFont(new Font("Arial", true, false, 24));
+        hud.setColor(Color.WHITE);
+        hud.drawString("LIVES: " + ship.getLives(), 15, 30);
+
+        String scoreText = "SCORE: " + ship.getScore();
+        int scoreWidth = scoreText.length() * (24 * 6 / 10);
+        hud.drawString(scoreText, getWidth() - 15 - scoreWidth, 30);
+
+        // no lives left, so the game is over
+        if (ship.getLives() <= 0)
+        {
+            hud.setFont(new Font("Arial", true, false, 46));
+            hud.drawString("GAME OVER", centerX(hud, "GAME OVER"), getHeight() / 2);
+
+            hud.setFont(new Font("Arial", true, false, 30));
+            hud.drawString("SCORE: " + ship.getScore(), centerX(hud, scoreText), getHeight() / 2 + 60);
+
+            Greenfoot.stop();
+        }
+
+        setBackground(hud);
+    }
+
     private void chooseDifficulty()
     {
         if (Greenfoot.isKeyDown("1"))
@@ -109,14 +173,8 @@ public class ShooterWorld extends World
 
     private void startGame()
     {
-        // remove the menu texts
-        showText("", getWidth() / 2, 180);
-        showText("", getWidth() / 2, 320);
-        showText("", getWidth() / 2, 370);
-        showText("", getWidth() / 2, 420);
-
-        // switch to the game background
-        GreenfootImage gameBackground = new GreenfootImage("backg.png");
+        // switch to the game background (removes the menu texts too)
+        gameBackground = new GreenfootImage("backg.png");
         gameBackground.scale(getWidth(), getHeight());
         setBackground(gameBackground);
 
