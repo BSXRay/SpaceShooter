@@ -14,7 +14,7 @@ public class ShooterWorld extends World
     public ShooterWorld()
     {    
         // 600 breit, 800 hoch
-        super(600, 800, 1);
+        super(700, 900, 1);
         erzeugeStartbelegung();
     }
 
