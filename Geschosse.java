@@ -16,6 +16,7 @@ public class Geschosse extends Actor
         Staerke = 1;
         setImage("geschoss.png");
         getImage().scale(80, 60);
+        playSound(); //play shooting sound
     }
 
     public void act()
@@ -28,7 +29,10 @@ public class Geschosse extends Actor
     {
         setLocation(getX(), getY() - Geschwindigkeit);
     }
-
+    private void playSound()
+    {
+        Greenfoot.playSound("pew.mp3");
+    }
     private void amRandEntfernen()
     {
         // oben angekommen, dann loeschen
