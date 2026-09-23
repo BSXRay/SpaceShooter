@@ -1,11 +1,15 @@
 #BlueJ class context
 comment0.target=ShooterWorld
-comment0.text=\r\n\ The\ game\ world.\ Holds\ the\ background,\ the\ music\r\n\ and\ spawns\ the\ meteors\ from\ the\ top.\r\n
+comment0.text=\r\n\ The\ game\ world.\ Shows\ the\ difficulty\ menu\ on\ the\ first\ start\r\n\ and\ then\ spawns\ the\ meteors\ and\ UFOs\ from\ the\ top.\r\n
 comment1.params=
 comment1.target=ShooterWorld()
 comment2.params=
 comment2.target=void\ act()
 comment3.params=
-comment3.target=void\ setupStart()
-comment3.text=\r\n\ Places\ the\ ship\ at\ the\ bottom,\ nicely\ centered.\r\n
-numComments=4
+comment3.target=void\ chooseDifficulty()
+comment4.params=
+comment4.target=void\ startGame()
+comment5.params=
+comment5.target=void\ setupStart()
+comment5.text=\r\n\ Places\ the\ ship\ at\ the\ bottom,\ nicely\ centered.\r\n
+numComments=6

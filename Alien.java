@@ -8,17 +8,24 @@ import greenfoot.*;
 
 public class Alien extends Actor
 {
+    private boolean hardMode;
     private int speedX;
     private int speedY;
     private int lives;
-    // smaller hitbox: hits only count right next to the alien's center
-    private static final int HIT_RANGE_X = 25;
-    private static final int HIT_RANGE_Y = 20;
+    // smaller hitbox in hard mode, a bit bigger than the basic one
+    private static final int HIT_RANGE_X = 45;
+    private static final int HIT_RANGE_Y = 40;
 
     public Alien()
     {
+        this(false, 0);
+    }
+
+    public Alien(boolean hard, int extraSpeed)
+    {
+        hardMode = hard;
         speedX = 3;
-        speedY = 2;
+        speedY = 2 + extraSpeed;
         lives = 3;
         // random starting direction, so it looks a bit chaotic
         if (Greenfoot.getRandomNumber(2) == 0)
@@ -76,7 +83,9 @@ public class Alien extends Actor
     {
         // each hit takes one life, the alien dies after 3 hits
         Bullet bullet = (Bullet) getOneIntersectingObject(Bullet.class);
-        if (bullet != null && isWithinHitbox(bullet))
+        // easy mode: full image hitbox, hard mode: smaller box around the center
+        boolean hits = hardMode ? (bullet != null && isWithinHitbox(bullet)) : (bullet != null);
+        if (hits)
         {
             getWorld().removeObject(bullet);
             lives = lives - bullet.getStrength();
@@ -100,7 +109,8 @@ public class Alien extends Actor
     {
         // touching the ship costs one life
         Shooter ship = (Shooter) getOneIntersectingObject(Shooter.class);
-        if (ship != null && isWithinHitbox(ship))
+        boolean hits = hardMode ? (ship != null && isWithinHitbox(ship)) : (ship != null);
+        if (hits)
         {
             penalizePlayer();
             getWorld().removeObject(this);
@@ -127,14 +137,14 @@ public class Alien extends Actor
 
     private void penalizePlayer()
     {
-        // player loses a life and 10 points
+        // player loses a life and one point
         Shooter ship = getWorld().getObjects(Shooter.class).isEmpty()
                 ? null
                 : (Shooter) getWorld().getObjects(Shooter.class).get(0);
         if (ship != null)
         {
             ship.loseLives(1);
-            ship.addScore(-10);
+            ship.addScore(-1);
         }
     }
 }

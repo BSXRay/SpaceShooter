@@ -12,11 +12,11 @@ public class Shooter extends Actor
     private int shotCooldown;
     private int score;
     private static final int SHOT_DELAY = 12;
-    private static final int MAX_LIVES = 3;
+    private static final int MAX_LIVES = 5;
 
     public Shooter()
     {
-        lives = 3;
+        lives = 5;
         speed = 4;
         shotCooldown = 0;
         score = 0;

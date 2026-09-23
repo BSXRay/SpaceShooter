@@ -1,7 +1,7 @@
 /**
  * A meteor that falls down from the top.
  * It is not controlled by the player and
- * costs 2 lives when it hits the ship.
+ * costs 1 live when it hits the ship.
  */
 import greenfoot.*;
 
@@ -9,14 +9,21 @@ public class Meteor extends Actor
 {
     private int speed;
     private int damage;
+    private boolean shootable; // only in hard mode you can shoot them
     // smaller hitbox: only counts as a hit when really close to the ship's center
     private static final int HIT_RANGE_X = 35;
     private static final int HIT_RANGE_Y = 45;
 
     public Meteor()
     {
+        this(false);
+    }
+
+    public Meteor(boolean canBeShot)
+    {
         speed = 3;
-        damage = 2;
+        damage = 1;
+        shootable = canBeShot;
         setImage("meteorite.png");
         getImage().scale(60, 60);
     }
@@ -24,7 +31,12 @@ public class Meteor extends Actor
     public void act()
     {
         moveDown();
-        checkShipHit();
+        checkBulletHit();
+        // after a hit the meteor is already removed, so skip the rest
+        if (getWorld() != null)
+        {
+            checkShipHit();
+        }
         // after a hit the meteor is already removed, so skip the rest
         if (getWorld() != null)
         {
@@ -36,6 +48,17 @@ public class Meteor extends Actor
     {
         // move straight downwards
         setLocation(getX(), getY() + speed);
+    }
+
+    private void checkBulletHit()
+    {
+        // a bullet destroys the meteor (only possible in hard mode)
+        Bullet bullet = (Bullet) getOneIntersectingObject(Bullet.class);
+        if (shootable && bullet != null)
+        {
+            getWorld().removeObject(bullet);
+            getWorld().removeObject(this);
+        }
     }
 
     private void checkShipHit()
