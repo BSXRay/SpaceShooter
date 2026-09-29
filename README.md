@@ -12,6 +12,8 @@ git clone https://github.com/BSXRay/SpaceShooter
 # Controls
 * **A** | **<-** Left
 * **D** | **->** Right
+* **W** | **arrow up** Up
+* **S** | **arrow down** Down
 * **P** | Pause/resume the music
 
 # Class Diagram - SpaceShooter
