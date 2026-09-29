@@ -12,6 +12,11 @@ public class Alien extends Actor
     private int speedX;
     private int speedY;
     private int lives;
+
+    // Explosion
+    private boolean exploding = false;
+    private int explosionTimer = 8;
+
     // smaller hitbox in hard mode, a bit bigger than the basic one
     private static final int HIT_RANGE_X = 45;
     private static final int HIT_RANGE_Y = 40;
@@ -21,30 +26,52 @@ public class Alien extends Actor
         this(false, 0);
     }
 
+    public void PlayHitSound()
+    {
+        Greenfoot.playSound("boom.mp3");
+    }
+
     public Alien(boolean hard, int extraSpeed)
     {
         hardMode = hard;
         speedX = 3;
         speedY = 2 + extraSpeed;
         lives = 3;
+
         // random starting direction, so it looks a bit chaotic
         if (Greenfoot.getRandomNumber(2) == 0)
         {
             speedX = -speedX;
         }
+
         setImage("alien_1.png");
         getImage().scale(80, 50);
     }
 
     public void act()
     {
+        // If the alien is exploding, only run the explosion timer
+        if (exploding)
+        {
+            explosionTimer--;
+
+            if (explosionTimer <= 0)
+            {
+                getWorld().removeObject(this);
+            }
+
+            return;
+        }
+
         move();
         bounceAtEdges();
         checkBulletHit();
+
         if (getWorld() != null)
         {
             checkShipHit();
         }
+
         if (getWorld() != null)
         {
             removeAtBottom();
@@ -83,24 +110,49 @@ public class Alien extends Actor
     {
         // each hit takes one life, the alien dies after 3 hits
         Bullet bullet = (Bullet) getOneIntersectingObject(Bullet.class);
-        // easy mode: full image hitbox, hard mode: smaller box around the center
-        boolean hits = hardMode ? (bullet != null && isWithinHitbox(bullet)) : (bullet != null);
+
+        // easy mode: full image hitbox
+        // hard mode: smaller box around the center
+        boolean hits = hardMode
+                ? (bullet != null && isWithinHitbox(bullet))
+                : (bullet != null);
+
         if (hits)
         {
             getWorld().removeObject(bullet);
+
             lives = lives - bullet.getStrength();
+
             if (lives <= 0)
             {
                 // destroyed: reward the player
                 Shooter ship = getWorld().getObjects(Shooter.class).isEmpty()
                         ? null
-                        : (Shooter) getWorld().getObjects(Shooter.class).get(0);
+                        : (Shooter) getWorld()
+                            .getObjects(Shooter.class)
+                            .get(0);
+
                 if (ship != null)
                 {
                     ship.addLife(1);
                     ship.addScore(1);
                 }
-                getWorld().removeObject(this);
+
+                // Play explosion sound
+                PlayHitSound();
+
+                // Show explosion image
+                GreenfootImage explosion = new GreenfootImage("boom.png");
+
+                // Set explosion size
+                explosion.scale(80, 80);
+
+                // Put explosion exactly where the alien was
+                setImage(explosion);
+
+                // Start explosion timer
+                exploding = true;
+                explosionTimer = 8;
             }
         }
     }
@@ -109,7 +161,11 @@ public class Alien extends Actor
     {
         // touching the ship costs one life
         Shooter ship = (Shooter) getOneIntersectingObject(Shooter.class);
-        boolean hits = hardMode ? (ship != null && isWithinHitbox(ship)) : (ship != null);
+
+        boolean hits = hardMode
+                ? (ship != null && isWithinHitbox(ship))
+                : (ship != null);
+
         if (hits)
         {
             penalizePlayer();
@@ -122,7 +178,9 @@ public class Alien extends Actor
         // small collision box around the middle of the alien
         int dx = other.getX() - getX();
         int dy = other.getY() - getY();
-        return Math.abs(dx) <= HIT_RANGE_X && Math.abs(dy) <= HIT_RANGE_Y;
+
+        return Math.abs(dx) <= HIT_RANGE_X
+                && Math.abs(dy) <= HIT_RANGE_Y;
     }
 
     private void removeAtBottom()
@@ -140,7 +198,10 @@ public class Alien extends Actor
         // player loses a life and one point
         Shooter ship = getWorld().getObjects(Shooter.class).isEmpty()
                 ? null
-                : (Shooter) getWorld().getObjects(Shooter.class).get(0);
+                : (Shooter) getWorld()
+                    .getObjects(Shooter.class)
+                    .get(0);
+
         if (ship != null)
         {
             ship.loseLives(1);

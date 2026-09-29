@@ -1,8 +1,8 @@
-/**
- * A meteor that falls down from the top.
- * It is not controlled by the player and
- * costs 1 live when it hits the ship.
- */
+ /**
+  * A meteor that falls down from the top.
+  * It is not controlled by the player and
+  * costs 1 life when it hits the ship.
+  */
 import greenfoot.*;
 
 public class Meteor extends Actor
@@ -10,6 +10,11 @@ public class Meteor extends Actor
     private int speed;
     private int damage;
     private boolean shootable; // only in hard mode you can shoot them
+
+    // Explosion
+    private boolean exploding = false;
+    private int explosionTimer = 8;
+
     // smaller hitbox: only counts as a hit when really close to the ship's center
     private static final int HIT_RANGE_X = 35;
     private static final int HIT_RANGE_Y = 45;
@@ -19,24 +24,45 @@ public class Meteor extends Actor
         this(false);
     }
 
+    public void PlayHitSound()
+    {
+        Greenfoot.playSound("meteorBoom.mp3");
+    }
+
     public Meteor(boolean canBeShot)
     {
         speed = 3;
         damage = 1;
         shootable = canBeShot;
+
         setImage("meteorite.png");
         getImage().scale(60, 60);
     }
 
     public void act()
     {
+        // If the meteor is exploding, only run the explosion timer
+        if (exploding)
+        {
+            explosionTimer--;
+
+            if (explosionTimer <= 0)
+            {
+                getWorld().removeObject(this);
+            }
+
+            return;
+        }
+
         moveDown();
         checkBulletHit();
+
         // after a hit the meteor is already removed, so skip the rest
         if (getWorld() != null)
         {
             checkShipHit();
         }
+
         // after a hit the meteor is already removed, so skip the rest
         if (getWorld() != null)
         {
@@ -54,10 +80,27 @@ public class Meteor extends Actor
     {
         // a bullet destroys the meteor (only possible in hard mode)
         Bullet bullet = (Bullet) getOneIntersectingObject(Bullet.class);
+
         if (shootable && bullet != null)
         {
+            // Remove bullet
             getWorld().removeObject(bullet);
-            getWorld().removeObject(this);
+
+            // Play explosion sound
+            PlayHitSound();
+
+            // Show explosion image
+            GreenfootImage explosion = new GreenfootImage("meteorBoom.png");
+
+            // Set explosion size
+            explosion.scale(60, 60);
+
+            // Put explosion exactly where the meteor was
+            setImage(explosion);
+
+            // Start explosion
+            exploding = true;
+            explosionTimer = 8;
         }
     }
 
@@ -65,6 +108,7 @@ public class Meteor extends Actor
     {
         // if it touches the ship AND is close to its center, take lives
         Shooter ship = (Shooter) getOneIntersectingObject(Shooter.class);
+
         if (ship != null && isCloseToShip(ship))
         {
             ship.loseLives(damage);
@@ -77,7 +121,9 @@ public class Meteor extends Actor
         // small collision box around the middle of the ship
         int dx = getX() - ship.getX();
         int dy = getY() - ship.getY();
-        return Math.abs(dx) <= HIT_RANGE_X && Math.abs(dy) <= HIT_RANGE_Y;
+
+        return Math.abs(dx) <= HIT_RANGE_X
+                && Math.abs(dy) <= HIT_RANGE_Y;
     }
 
     private void removeAtBottom()
