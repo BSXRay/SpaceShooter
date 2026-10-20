@@ -53,7 +53,12 @@ const audioFiles = {
 const audio = {};
 
 for (const [key, file] of Object.entries(audioFiles)) {
-  const a = new Audio(ROOT + "sounds/" + file);
+  const a = new Audio();
+
+  // Ask the browser to buffer the asset up front so playback can start
+  // as soon as possible, instead of waiting for the first play() call.
+  a.preload = "auto";
+  a.src = ROOT + "sounds/" + file;
 
   if (key === "music") {
     a.loop = true;
@@ -61,6 +66,58 @@ for (const [key, file] of Object.entries(audioFiles)) {
   }
 
   audio[key] = a;
+}
+
+// Tracks which clips have enough data buffered to play smoothly.
+const audioReady = {};
+const audioPending = {};
+
+for (const key of Object.keys(audioFiles)) {
+  audioReady[key] = false;
+  audioPending[key] = false;
+
+  const a = audio[key];
+
+  const markReady = () => {
+    audioReady[key] = true;
+
+    // If a play() was requested before the asset was ready, start now.
+    if (audioPending[key]) {
+      audioPending[key] = false;
+
+      // Do not start music while muted or outside an active round.
+      if (
+        key === "music" &&
+        (!musicOn || mode === "paused" || mode === "menu")
+      ) {
+        return;
+      }
+
+      playClip(key);
+    }
+  };
+
+  a.addEventListener("canplaythrough", markReady);
+  a.addEventListener("loadeddata", markReady);
+
+  // Only mark as un-ready when it truly needs more data.
+  a.addEventListener("waiting", () => { audioReady[key] = false; });
+
+  a.addEventListener("error", () => {
+    audioReady[key] = false;
+    audioPending[key] = false;
+  });
+
+  // Already cached by the browser from a previous session.
+  if (a.readyState >= 3) {
+    audioReady[key] = true;
+  }
+
+  try {
+    a.load();
+  } catch (e) {
+    // Loading can be blocked; the ready events will handle the retry.
+  }
 }
 
 let musicOn = true;
@@ -85,7 +142,8 @@ function refreshMusic() {
   }
 }
 
-function sound(key) {
+// Raw play attempt, used once a clip is buffered.
+function playClip(key) {
   const a = audio[key];
   if (!a) return;
 
@@ -102,6 +160,27 @@ function sound(key) {
   } catch (e) {
     // Audio can be blocked by the browser.
   }
+}
+
+// Plays a clip, deferring until the asset has buffered if it has not yet.
+function sound(key) {
+  const a = audio[key];
+  if (!a) return;
+
+  if (!audioReady[key] && a.readyState < 3) {
+    // Remember that we wanted to play this and retry on `canplaythrough`.
+    audioPending[key] = true;
+
+    try {
+      a.load();
+    } catch (e) {
+      // Ignore; ready events will retry.
+    }
+
+    return;
+  }
+
+  playClip(key);
 }
 
 function toggleMusic() {
