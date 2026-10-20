@@ -69,6 +69,56 @@ function fallbackExplosion(x, y) {
   ctx.fill();
 }
 
+// Fallback badge for a power-up when its texture is unavailable.
+function fallbackPowerup(color, x, y, size) {
+  const r = size / 2;
+
+  ctx.save();
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 12;
+
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.lineTo(x + r, y);
+  ctx.lineTo(x, y + r);
+  ctx.lineTo(x - r, y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  ctx.fillStyle = "rgba(10,14,28,.8)";
+  ctx.beginPath();
+  ctx.arc(x, y, size * 0.22, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// Draws a power-up icon (texture or fallback), centered on (x, y).
+function drawPowerupIcon(powerup, x, y, size, rotation = 0) {
+  const key = powerup.image;
+
+  if (imageStatus[key] === "ok") {
+    ctx.save();
+    ctx.translate(x, y);
+
+    if (rotation) ctx.rotate(rotation);
+
+    ctx.drawImage(imgs[key], -size / 2, -size / 2, size, size);
+    ctx.restore();
+    return;
+  }
+
+  fallbackPowerup(powerup.color, x, y, size);
+}
+
+// Cubic ease-in-out, used by the award banner animation.
+function easeInOut(t) {
+  t = Math.max(0, Math.min(1, t));
+  return t < 0.5
+    ? 4 * t * t * t
+    : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
 function text(str, x, y, size = 24, align = "center") {
   ctx.fillStyle = "white";
   ctx.font = "bold " + size + "px Arial";
@@ -363,6 +413,162 @@ function drawHearts(x, y, hp, maxHp) {
 }
 
 // --------------------------------------------------
+// POWER-UP RENDERING
+// --------------------------------------------------
+
+// Floating pickups drifting down the play field.
+function drawPickups() {
+  for (const p of pickups) {
+    const bob = Math.sin(now / 220 + p.spin) * 3;
+
+    ctx.save();
+    ctx.shadowColor = p.type.color;
+    ctx.shadowBlur = 14;
+
+    drawPowerupIcon(p.type, p.x, p.y + bob, p.w, p.spin * 0.35);
+
+    ctx.restore();
+  }
+}
+
+// Collected power-ups, listed bottom-left as a small stack.
+function drawOwnedPowerups() {
+  const size = 34;
+  const gap = 42;
+  let y = AWARD.SLOT_Y;
+
+  for (const p of ownedPowerups) {
+    const x = AWARD.SLOT_X;
+    const r = size / 2 + 6;
+
+    // Dark rounded plate behind the icon.
+    ctx.fillStyle = "rgba(10,14,28,.55)";
+    roundRect(x - size / 2 - 4, y - size / 2 - 4, size + 8, size + 8, 9);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255,255,255,.18)";
+    ctx.lineWidth = 1.5;
+    roundRect(x - size / 2 - 4, y - size / 2 - 4, size + 8, size + 8, 9);
+    ctx.stroke();
+
+    drawPowerupIcon(p, x, y, size);
+
+    // Circular countdown: a ring that runs down as time is left.
+    const ratio = Math.max(0, Math.min(1, p.remaining / p.duration));
+    const start = -Math.PI / 2;
+
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(255,255,255,.15)";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(x, y, r, start, start + Math.PI * 2 * ratio);
+    ctx.strokeStyle = p.color;
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 8;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.lineCap = "butt";
+
+    // Remaining seconds, centered under the icon.
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 11px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(Math.ceil(p.remaining / 1000), x, y + r + 9);
+    ctx.textBaseline = "alphabetic";
+
+    y -= gap + 14;
+  }
+}
+
+// The blurred medal banner shown when a new power-up is collected.
+function drawAward() {
+  if (!award) return;
+
+  const p = award.powerup;
+  const badgeW = 260;
+  const badgeH = 58;
+  const badgeX = (W - badgeW) / 2;
+  const badgeY = AWARD.BADGE_Y - badgeH / 2;
+
+  let badgeAlpha = 1;
+  let iconX;
+  let iconY;
+  let iconScale = 1;
+
+  const restX = W / 2 - 78;
+
+  if (award.phase === "in") {
+    const t = easeInOut((now - award.start) / AWARD.IN_MS);
+
+    badgeAlpha = t;
+    iconX = award.fromX + (restX - award.fromX) * t;
+    iconY = award.fromY + (AWARD.BADGE_Y - award.fromY) * t;
+    iconScale = 1.4 + (1 - t) * 0.6;
+  } else if (award.phase === "hold") {
+    badgeAlpha = 1;
+    iconX = restX;
+    iconY = AWARD.BADGE_Y;
+  } else {
+    const t = easeInOut((now - award.start) / AWARD.OUT_MS);
+
+    badgeAlpha = 1 - t;
+    iconX = restX + (AWARD.SLOT_X - restX) * t;
+    iconY = AWARD.BADGE_Y + (AWARD.SLOT_Y - AWARD.BADGE_Y) * t;
+    iconScale = 1 - 0.4 * t;
+  }
+
+  // Frosted-glass backdrop behind the badge (medal plate):
+  // blur the scene, then lay a translucent plate on top.
+  ctx.save();
+  ctx.globalAlpha = badgeAlpha;
+
+  const plate = { x: badgeX - 10, y: badgeY - 8, w: badgeW + 20, h: badgeH + 16 };
+  const plateR = plate.h / 2;
+
+  roundRect(plate.x, plate.y, plate.w, plate.h, plateR);
+  ctx.clip();
+
+  ctx.filter = "blur(6px)";
+  ctx.drawImage(canvas, 0, 0, W, H);
+  ctx.filter = "none";
+
+  ctx.fillStyle = "rgba(10,14,28,.55)";
+  roundRect(plate.x, plate.y, plate.w, plate.h, plateR);
+  ctx.fill();
+  ctx.restore();
+
+  // Plate border.
+  ctx.save();
+  ctx.globalAlpha = badgeAlpha * 0.95;
+  ctx.strokeStyle = p.color;
+  ctx.lineWidth = 2;
+  roundRect(badgeX, badgeY, badgeW, badgeH, badgeH / 2);
+  ctx.stroke();
+  ctx.restore();
+
+  // Label text (fades with the badge).
+  ctx.save();
+  ctx.globalAlpha = badgeAlpha;
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 17px Arial";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText(p.name, W / 2 - 44, AWARD.BADGE_Y + 1);
+  ctx.restore();
+
+  // The flying icon, drawn last so it sits above the badge.
+  if (award.phase !== "out" || badgeAlpha > 0) {
+    drawPowerupIcon(p, iconX, iconY, 40 * iconScale);
+  }
+}
+
+// --------------------------------------------------
 // GAME RENDERING
 // --------------------------------------------------
 
@@ -371,7 +577,16 @@ function drawGame() {
 
   // Projectiles
   for (const b of bullets) {
-    if (!drawImage("bullet", b.x, b.y, b.w, b.h)) {
+    if (b.angle) {
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.rotate(b.angle);
+      if (!drawImage("bullet", 0, 0, b.w, b.h)) {
+        ctx.fillStyle = "#ffe879";
+        ctx.fillRect(-3, -15, 6, 30);
+      }
+      ctx.restore();
+    } else if (!drawImage("bullet", b.x, b.y, b.w, b.h)) {
       ctx.fillStyle = "#ffe879";
       ctx.fillRect(b.x - 3, b.y - 15, 6, 30);
     }
@@ -408,6 +623,9 @@ function drawGame() {
     fallbackShip();
   }
 
+  // Power-up pickups
+  drawPickups();
+
   // Explosions
   for (const e of explosions) {
     ctx.globalAlpha = Math.max(0, e.timer / 8);
@@ -416,6 +634,10 @@ function drawGame() {
   }
 
   drawHUD();
+
+  // Owned power-ups (bottom-left) and the award banner.
+  drawOwnedPowerups();
+  drawAward();
 
   if (mode !== "over") {
     drawPauseButton();

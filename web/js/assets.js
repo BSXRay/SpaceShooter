@@ -25,7 +25,10 @@ const imageNames = {
   meteor: "meteorite.png",
   meteorExplosion: "meteorBoom.png",
   alien: "alien_1.png",
-  alienExplosion: "boom.png"
+  alienExplosion: "boom.png",
+  rapidFire: "RapidFire.png",
+  spreadShot: "SpreadShot.png",
+  damageBoost: "DamageBoost.png"
 };
 
 const imgs = {};
@@ -59,7 +62,8 @@ const audioFiles = {
   music: "Background_music.mp3",
   shoot: "pew.mp3",
   alienBoom: "boom.mp3",
-  meteorBoom: "meteorBoom.mp3"
+  meteorBoom: "meteorBoom.mp3",
+  powerup: "powerup_schuss.mp3"
 };
 
 const audio = {};
@@ -221,7 +225,7 @@ let musicOn = true;
 function applyVolume() {
   audio.music.volume = settings.musicVol;
 
-  for (const key of ["shoot", "alienBoom", "meteorBoom"]) {
+  for (const key of ["shoot", "alienBoom", "meteorBoom", "powerup"]) {
     audio[key].volume = settings.sfxVol;
   }
 }

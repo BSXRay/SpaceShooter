@@ -11,6 +11,7 @@ let bullets;
 let meteors;
 let aliens;
 let explosions;
+let pickups;
 
 let lives = 5;
 let score = 0;
@@ -19,6 +20,59 @@ let meteorTimer = 0;
 
 let lastTime = 0;
 let accumulator = 0;
+
+// Timestamp of the current frame in ms, used for time-based animations.
+let now = 0;
+let pausedAt = 0;
+
+// Power-ups: `weight` is a relative drop chance (higher = more common).
+// Rapid Fire is the most common, then Damage Boost, then Spread Shot.
+// Power-up pickups & effects. `weight` is a relative drop chance
+// (higher = more common). `duration` is how long one pickup lasts; a
+// second copy stacks another full duration on top.
+const POWERUP_DURATION = 10000; // ms
+
+const POWERUPS = [
+  {
+    key: "rapidFire",
+    image: "rapidFire",
+    name: "RAPID FIRE",
+    weight: 50,
+    color: "#ffd24a",
+    duration: POWERUP_DURATION
+  },
+  {
+    key: "damageBoost",
+    image: "damageBoost",
+    name: "DAMAGE BOOST",
+    weight: 30,
+    color: "#ff6b6b",
+    duration: POWERUP_DURATION
+  },
+  {
+    key: "spreadShot",
+    image: "spreadShot",
+    name: "SPREAD SHOT",
+    weight: 20,
+    color: "#7fb2ff",
+    duration: POWERUP_DURATION
+  }
+];
+
+// Active power-ups, each with a remaining time in ms. Drawn bottom-left.
+let ownedPowerups = [];
+
+// Award banner animation state. Phases: "in" -> "hold" -> "out" -> null.
+const AWARD = {
+  IN_MS: 480,
+  HOLD_MS: 750,
+  OUT_MS: 460,
+  BADGE_Y: 640,
+  SLOT_X: 62,
+  SLOT_Y: 858
+};
+
+let award = null;
 
 // Difficulty presets. `meteorInterval` and `alienChance` are in update
 // ticks; lower interval / higher chance means more enemies.
@@ -32,7 +86,11 @@ const DIFFICULTIES = [
     alienHp: 1,
     meteorShootable: false,
     tightAlienHitbox: false,
-    hitRadius: 0.35
+    hitRadius: 0.35,
+    // Power-ups are rarer on EASY and the common ones even less likely.
+    // Spread Shot keeps its weight (20), so it becomes the most common here.
+    dropChance: 0.18,
+    powerupWeights: { rapidFire: 16, damageBoost: 12, spreadShot: 20 }
   },
   {
     id: 2,
@@ -43,7 +101,8 @@ const DIFFICULTIES = [
     alienHp: 3,
     meteorShootable: false,
     tightAlienHitbox: false,
-    hitRadius: 0.55
+    hitRadius: 0.55,
+    dropChance: 0.35
   },
   {
     id: 3,
@@ -54,7 +113,8 @@ const DIFFICULTIES = [
     alienHp: 3,
     meteorShootable: true,
     tightAlienHitbox: true,
-    hitRadius: 0.8
+    hitRadius: 0.8,
+    dropChance: 0.4
   },
   {
     id: 4,
@@ -65,7 +125,8 @@ const DIFFICULTIES = [
     alienHp: 3,
     meteorShootable: true,
     tightAlienHitbox: true,
-    hitRadius: 1
+    hitRadius: 1,
+    dropChance: 0.45
   }
 ];
 
@@ -155,6 +216,9 @@ function reset() {
   meteors = [];
   aliens = [];
   explosions = [];
+  pickups = [];
+  ownedPowerups = [];
+  award = null;
 }
 
 function startGame(id) {
@@ -178,6 +242,7 @@ function pauseGame() {
   if (mode !== "playing") return;
 
   mode = "paused";
+  pausedAt = now;
   pointer = null;
   audio.music.pause();
 }
@@ -186,6 +251,11 @@ function resumeGame() {
   if (mode !== "paused") return;
 
   mode = "playing";
+
+  // Keep time-based animations (award banner) from jumping forward.
+  if (award) {
+    award.start += now - pausedAt;
+  }
 
   if (musicOn) {
     sound("music");
@@ -286,6 +356,108 @@ function loseLife(n = 1) {
 }
 
 // --------------------------------------------------
+// POWER-UPS
+// --------------------------------------------------
+
+// Picks a power-up type using the weighted drop chances. A difficulty may
+// override individual weights (e.g. EASY makes the common ones rarer but
+// leaves Spread Shot untouched).
+function rollPowerup() {
+  const overrides = difficulty.powerupWeights || {};
+
+  const weightOf = p =>
+    overrides[p.key] !== undefined ? overrides[p.key] : p.weight;
+
+  let total = 0;
+
+  for (const p of POWERUPS) total += weightOf(p);
+
+  let r = Math.random() * total;
+
+  for (const p of POWERUPS) {
+    r -= weightOf(p);
+    if (r <= 0) return p;
+  }
+
+  return POWERUPS[0];
+}
+
+// Drops a falling power-up pickup at the given position.
+function dropPowerup(x, y) {
+  const type = rollPowerup();
+
+  pickups.push({
+    type,
+    x,
+    y,
+    w: 44,
+    h: 44,
+    speed: 2.2,
+    spin: Math.random() * Math.PI * 2
+  });
+}
+
+// Adds a collected power-up's time to the owned list and starts the
+// award banner. A second copy stacks another full duration on top.
+function collectPowerup(powerup, fromX, fromY) {
+  const existing = ownedPowerups.find(o => o.key === powerup.key);
+
+  if (existing) {
+    existing.remaining += powerup.duration;
+  } else {
+    ownedPowerups.push({ ...powerup, remaining: powerup.duration });
+  }
+
+  // (Re)start the medal banner animation.
+  award = {
+    powerup,
+    phase: "in",
+    start: now,
+    fromX,
+    fromY
+  };
+
+  sound("powerup");
+}
+
+// Returns true while the given power-up is active.
+function hasPowerup(key) {
+  return ownedPowerups.some(p => p.key === key);
+}
+
+// Ticks down active power-ups and removes the expired ones.
+function updatePowerups(dt) {
+  for (const p of ownedPowerups) {
+    p.remaining -= dt;
+  }
+
+  ownedPowerups = ownedPowerups.filter(p => p.remaining > 0);
+}
+
+// Advances the award banner animation and returns the current phase.
+function updateAward() {
+  if (!award) return;
+
+  const t = now - award.start;
+
+  if (award.phase === "in") {
+    if (t >= AWARD.IN_MS) {
+      award.phase = "hold";
+      award.start = now;
+    }
+  } else if (award.phase === "hold") {
+    if (t >= AWARD.HOLD_MS) {
+      award.phase = "out";
+      award.start = now;
+    }
+  } else if (award.phase === "out") {
+    if (t >= AWARD.OUT_MS) {
+      award = null;
+    }
+  }
+}
+
+// --------------------------------------------------
 // GAME LOGIC
 // --------------------------------------------------
 
@@ -308,19 +480,33 @@ function update() {
   }
 
   if ((keys[" "] || autoShoot) && ship.cooldown === 0) {
-    bullets.push({
-      x: ship.x,
-      y: ship.y - 65,
-      w: 80,
-      h: 60,
-      hitW: 18,
-      hitH: 42,
-      speed: 10
-    });
+    const spread = hasPowerup("spreadShot");
+    const angles = spread ? [-0.28, -0.14, 0, 0.14, 0.28] : [0];
 
-    ship.cooldown = 10;
+    for (const angle of angles) {
+      const speed = 10;
+
+      bullets.push({
+        x: ship.x,
+        y: ship.y - 65,
+        w: 80,
+        h: 60,
+        hitW: 18,
+        hitH: 42,
+        speed,
+        vx: Math.sin(angle) * speed,
+        vy: -Math.cos(angle) * speed,
+        angle
+      });
+    }
+
+    // Rapid fire roughly halves the delay between shots.
+    ship.cooldown = hasPowerup("rapidFire") ? 5 : 10;
     sound("shoot");
   }
+
+  // Power-up timers (one update tick is 20 ms).
+  updatePowerups(20);
 
   // Meteors
   meteorTimer++;
@@ -337,10 +523,11 @@ function update() {
 
   // Projectiles
   for (const b of bullets) {
-    b.y -= b.speed;
+    b.x += b.vx || 0;
+    b.y += b.vy !== undefined ? b.vy : -b.speed;
   }
 
-  bullets = bullets.filter(b => b.y > -40);
+  bullets = bullets.filter(b => b.y > -40 && b.x > -40 && b.x < W + 40);
 
   // Update meteors
   for (const m of meteors) {
@@ -405,7 +592,7 @@ function update() {
 
     if (bi !== -1) {
       bullets.splice(bi, 1);
-      a.hp--;
+      a.hp -= hasPowerup("damageBoost") ? 2 : 1;
 
       if (a.hp <= 0) {
         lives = Math.min(5, lives + 1);
@@ -416,6 +603,11 @@ function update() {
 
         explode(a.x, a.y, "alienExplosion");
         sound("alienBoom");
+
+        if (Math.random() < difficulty.dropChance) {
+          dropPowerup(a.x, a.y);
+        }
+
         continue;
       }
     }
@@ -445,4 +637,21 @@ function update() {
   }
 
   explosions = explosions.filter(e => e.timer > 0);
+
+  // Power-up pickups
+  for (const p of pickups) {
+    p.y += p.speed;
+    p.spin += 0.04;
+
+    if (ellipseHit(p, ship, 1.1)) {
+      collectPowerup(p.type, p.x, p.y);
+      p.remove = true;
+    } else if (p.y - 30 >= H) {
+      p.remove = true;
+    }
+  }
+
+  pickups = pickups.filter(p => !p.remove);
+
+  updateAward();
 }

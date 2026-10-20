@@ -9,6 +9,8 @@ function frame(time) {
     lastTime = time;
   }
 
+  now = time;
+
   accumulator += Math.min(time - lastTime, 100);
   lastTime = time;
 
