@@ -83,18 +83,72 @@ function plainText(str, x, y, size = 16, color = "#d0d4e5") {
   ctx.fillText(str, x, y);
 }
 
-function button(r, active) {
-  ctx.fillStyle = active ? "#145c49" : "#303448";
-  ctx.fillRect(r.x, r.y, r.w, r.h);
-
-  ctx.strokeStyle = active ? "#54ffc5" : "#a6caff";
-  ctx.lineWidth = 3;
-  ctx.strokeRect(r.x, r.y, r.w, r.h);
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
 }
 
-function dim(alpha = 0.65) {
-  ctx.fillStyle = "rgba(0,0,0," + alpha + ")";
+function button(r, active) {
+  const accent = active ? "#54ffc5" : "#7fb2ff";
+  const radius = 14;
+
+  // Outer glow
+  ctx.save();
+  ctx.shadowColor = accent;
+  ctx.shadowBlur = active ? 26 : 14;
+
+  const grad = ctx.createLinearGradient(
+    r.x, r.y, r.x, r.y + r.h
+  );
+
+  if (active) {
+    grad.addColorStop(0, "#1b7d63");
+    grad.addColorStop(1, "#0c4236");
+  } else {
+    grad.addColorStop(0, "#2b3450");
+    grad.addColorStop(1, "#171d30");
+  }
+
+  ctx.fillStyle = grad;
+  roundRect(r.x, r.y, r.w, r.h, radius);
+  ctx.fill();
+  ctx.restore();
+
+  // Top highlight
+  const shine = ctx.createLinearGradient(
+    r.x, r.y, r.x, r.y + r.h * 0.5
+  );
+  shine.addColorStop(0, "rgba(255,255,255,.18)");
+  shine.addColorStop(1, "rgba(255,255,255,0)");
+
+  ctx.fillStyle = shine;
+  roundRect(r.x + 2, r.y + 2, r.w - 4, r.h * 0.5, radius - 2);
+  ctx.fill();
+
+  // Border
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 2;
+  roundRect(r.x, r.y, r.w, r.h, radius);
+  ctx.stroke();
+}
+
+function dim(alpha = 0.55) {
+  ctx.fillStyle = "rgba(6,9,20," + alpha + ")";
   ctx.fillRect(0, 0, W, H);
+}
+
+function blurBackdrop(px = 6) {
+  ctx.save();
+  ctx.globalAlpha = 0.9;
+  ctx.filter = "blur(" + px + "px)";
+  ctx.drawImage(canvas, 0, 0, W, H);
+  ctx.restore();
+  ctx.filter = "none";
 }
 
 // --------------------------------------------------
@@ -103,6 +157,11 @@ function dim(alpha = 0.65) {
 
 function drawMenu() {
   background("menu");
+
+  // Blur the background behind the menu content.
+  blurBackdrop(5);
+
+  dim(0.25);
 
   text("SPACE SHOOTER", 300, 150, 46);
 
@@ -164,13 +223,27 @@ function drawHUD() {
 
 function drawPauseButton() {
   const b = PAUSE_BTN;
+  const radius = 10;
 
-  ctx.fillStyle = "rgba(16,23,44,.75)";
-  ctx.fillRect(b.x, b.y, b.w, b.h);
+  ctx.save();
+  ctx.shadowColor = "#7fb2ff";
+  ctx.shadowBlur = 12;
+
+  const grad = ctx.createLinearGradient(
+    b.x, b.y, b.x, b.y + b.h
+  );
+  grad.addColorStop(0, "rgba(43,52,80,.92)");
+  grad.addColorStop(1, "rgba(16,23,44,.92)");
+
+  ctx.fillStyle = grad;
+  roundRect(b.x, b.y, b.w, b.h, radius);
+  ctx.fill();
+  ctx.restore();
 
   ctx.strokeStyle = "#a6caff";
   ctx.lineWidth = 2;
-  ctx.strokeRect(b.x, b.y, b.w, b.h);
+  roundRect(b.x, b.y, b.w, b.h, radius);
+  ctx.stroke();
 
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(b.x + 14, b.y + 11, 6, 18);
@@ -178,7 +251,8 @@ function drawPauseButton() {
 }
 
 function drawPauseOverlay() {
-  dim(0.7);
+  blurBackdrop(8);
+  dim(0.55);
 
   text("PAUSED", 300, 330, 46);
 
@@ -192,7 +266,8 @@ function drawPauseOverlay() {
 }
 
 function drawGameOver() {
-  dim(0.65);
+  blurBackdrop(8);
+  dim(0.55);
 
   text("GAME OVER", 300, 420, 46);
   text("SCORE: " + score, 300, 480, 30);
