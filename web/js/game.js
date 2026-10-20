@@ -20,9 +20,6 @@ let meteorTimer = 0;
 let lastTime = 0;
 let accumulator = 0;
 
-// Each UFO needs this many hits to be destroyed; also shown as hearts.
-const ALIEN_HP = 3;
-
 // Difficulty presets. `meteorInterval` and `alienChance` are in update
 // ticks; lower interval / higher chance means more enemies.
 const DIFFICULTIES = [
@@ -32,6 +29,7 @@ const DIFFICULTIES = [
     meteorInterval: 50,
     alienChance: 1,
     alienSpeedUp: 0,
+    alienHp: 1,
     meteorShootable: false,
     tightAlienHitbox: false,
     hitRadius: 0.35
@@ -42,6 +40,7 @@ const DIFFICULTIES = [
     meteorInterval: 38,
     alienChance: 1.5,
     alienSpeedUp: 0,
+    alienHp: 3,
     meteorShootable: false,
     tightAlienHitbox: false,
     hitRadius: 0.55
@@ -52,6 +51,7 @@ const DIFFICULTIES = [
     meteorInterval: 25,
     alienChance: 2,
     alienSpeedUp: 300,
+    alienHp: 3,
     meteorShootable: true,
     tightAlienHitbox: true,
     hitRadius: 0.8
@@ -62,6 +62,7 @@ const DIFFICULTIES = [
     meteorInterval: 16,
     alienChance: 3,
     alienSpeedUp: 150,
+    alienHp: 3,
     meteorShootable: true,
     tightAlienHitbox: true,
     hitRadius: 1
@@ -240,8 +241,8 @@ function spawnAlien() {
         ? Math.floor(ticks / difficulty.alienSpeedUp)
         : 0
     ),
-    hp: ALIEN_HP,
-    maxHp: ALIEN_HP,
+    hp: difficulty.alienHp,
+    maxHp: difficulty.alienHp,
     exploding: false,
     timer: 8
   });
