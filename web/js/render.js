@@ -167,11 +167,11 @@ function drawMenu() {
 
   // Easy
   button({ x: 130, y: 275, w: 340, h: 65 });
-  text("press 1 for EASY", 300, 316, 26);
+  text("EASY", 300, 316, 26);
 
   // Hard
   button({ x: 130, y: 350, w: 340, h: 65 });
-  text("press 2 for HARD", 300, 391, 26);
+  text("HARD", 300, 391, 26);
 
   plainText(
     "TIP: in hard mode you can shoot the meteors",
