@@ -5,7 +5,6 @@
 // --------------------------------------------------
 
 let mode = "menu"; // "menu" | "playing" | "paused" | "over"
-let difficulty = 0;
 
 let ship;
 let bullets;
@@ -21,15 +20,71 @@ let meteorTimer = 0;
 let lastTime = 0;
 let accumulator = 0;
 
+// Difficulty presets. `meteorInterval` and `alienChance` are in update
+// ticks; lower interval / higher chance means more enemies.
+const DIFFICULTIES = [
+  {
+    id: 1,
+    name: "EASY",
+    meteorInterval: 50,
+    alienChance: 1,
+    alienSpeedUp: 0,
+    meteorShootable: false,
+    tightAlienHitbox: false,
+    hitRadius: 0.35
+  },
+  {
+    id: 2,
+    name: "NORMAL",
+    meteorInterval: 38,
+    alienChance: 1.5,
+    alienSpeedUp: 0,
+    meteorShootable: false,
+    tightAlienHitbox: false,
+    hitRadius: 0.55
+  },
+  {
+    id: 3,
+    name: "HARD",
+    meteorInterval: 25,
+    alienChance: 2,
+    alienSpeedUp: 300,
+    meteorShootable: true,
+    tightAlienHitbox: true,
+    hitRadius: 0.8
+  },
+  {
+    id: 4,
+    name: "INSANE",
+    meteorInterval: 16,
+    alienChance: 3,
+    alienSpeedUp: 150,
+    meteorShootable: true,
+    tightAlienHitbox: true,
+    hitRadius: 1
+  }
+];
+
+let difficulty = DIFFICULTIES[0];
+
 // Hitboxes for menu, pause button and overlays (canvas space).
 const MENU_LAYOUT = {
-  easy: { x: 130, y: 260, w: 340, h: 65 },
-  hard: { x: 130, y: 335, w: 340, h: 65 },
-  auto: { x: 150, y: 450, w: 300, h: 60 },
-  settings: { x: 150, y: 525, w: 300, h: 55 }
+  easy: { x: 120, y: 210, w: 360, h: 62 },
+  normal: { x: 120, y: 286, w: 360, h: 62 },
+  hard: { x: 120, y: 362, w: 360, h: 62 },
+  insane: { x: 120, y: 438, w: 360, h: 62 },
+  auto: { x: 120, y: 536, w: 360, h: 56 },
+  settings: { x: 120, y: 606, w: 360, h: 56 }
 };
 
-const PAUSE_BTN = { x: 12, y: 12, w: 44, h: 40 };
+const DIFFICULTY_LAYOUT = [
+  MENU_LAYOUT.easy,
+  MENU_LAYOUT.normal,
+  MENU_LAYOUT.hard,
+  MENU_LAYOUT.insane
+];
+
+const PAUSE_BTN = { x: 12, y: 12, w: 52, h: 46 };
 const PAUSE_RESUME_BTN = { x: 150, y: 400, w: 300, h: 65 };
 const PAUSE_MENU_BTN = { x: 150, y: 490, w: 300, h: 65 };
 
@@ -86,6 +141,8 @@ function reset() {
     y: 840,
     w: 100,
     h: 120,
+    hitW: 56,
+    hitH: 74,
     speed: 10,
     cooldown: 0
   };
@@ -96,8 +153,9 @@ function reset() {
   explosions = [];
 }
 
-function startGame(d) {
-  difficulty = d;
+function startGame(id) {
+  difficulty =
+    DIFFICULTIES.find(d => d.id === id) || DIFFICULTIES[0];
 
   reset();
   mode = "playing";
@@ -154,8 +212,10 @@ function spawnMeteor() {
     y: 10,
     w: 60,
     h: 60,
+    hitW: 44,
+    hitH: 44,
     speed: 3,
-    shootable: difficulty === 2,
+    shootable: difficulty.meteorShootable,
     exploding: false,
     timer: 8
   });
@@ -169,10 +229,12 @@ function spawnAlien() {
     y: 10,
     w: 80,
     h: 50,
+    hitW: 62,
+    hitH: 34,
     vx,
     vy: 2 + (
-      difficulty === 2
-        ? Math.floor(ticks / 300)
+      difficulty.alienSpeedUp
+        ? Math.floor(ticks / difficulty.alienSpeedUp)
         : 0
     ),
     hp: 3,
@@ -185,18 +247,31 @@ function explode(x, y, type) {
   explosions.push({ x, y, type, timer: 8 });
 }
 
+// Axis-aligned overlap using each object's dedicated hitbox size.
 function overlap(a, b) {
+  const aw = a.hitW !== undefined ? a.hitW : a.w;
+  const ah = a.hitH !== undefined ? a.hitH : a.h;
+  const bw = b.hitW !== undefined ? b.hitW : b.w;
+  const bh = b.hitH !== undefined ? b.hitH : b.h;
+
   return (
-    Math.abs(a.x - b.x) < (a.w + b.w) / 2 &&
-    Math.abs(a.y - b.y) < (a.h + b.h) / 2
+    Math.abs(a.x - b.x) < (aw + bw) / 2 &&
+    Math.abs(a.y - b.y) < (ah + bh) / 2
   );
 }
 
-function centerHit(a, b, rx, ry) {
-  return (
-    Math.abs(a.x - b.x) <= rx &&
-    Math.abs(a.y - b.y) <= ry
-  );
+// Elliptical hit test, used for the ship and UFOs so corner pixels
+// do not count. Radii are derived from the hitbox sizes.
+function ellipseHit(a, b, scale = 1) {
+  const aw = (a.hitW !== undefined ? a.hitW : a.w) / 2 * scale;
+  const ah = (a.hitH !== undefined ? a.hitH : a.h) / 2 * scale;
+  const bw = (b.hitW !== undefined ? b.hitW : b.w) / 2 * scale;
+  const bh = (b.hitH !== undefined ? b.hitH : b.h) / 2 * scale;
+
+  const dx = (a.x - b.x) / (aw + bw);
+  const dy = (a.y - b.y) / (ah + bh);
+
+  return dx * dx + dy * dy <= 1;
 }
 
 function loseLife(n = 1) {
@@ -236,6 +311,8 @@ function update() {
       y: ship.y - 65,
       w: 80,
       h: 60,
+      hitW: 18,
+      hitH: 42,
       speed: 10
     });
 
@@ -246,13 +323,13 @@ function update() {
   // Meteors
   meteorTimer++;
 
-  if (meteorTimer >= (difficulty === 2 ? 25 : 50)) {
+  if (meteorTimer >= difficulty.meteorInterval) {
     meteorTimer = 0;
     spawnMeteor();
   }
 
   // UFOs
-  if (Math.random() * 100 < (difficulty === 2 ? 2 : 1)) {
+  if (Math.random() * 100 < difficulty.alienChance) {
     spawnAlien();
   }
 
@@ -287,7 +364,7 @@ function update() {
       }
     }
 
-    if (centerHit(m, ship, 35, 45)) {
+    if (ellipseHit(m, ship, 0.9)) {
       loseLife(1);
       m.remove = true;
     }
@@ -319,8 +396,9 @@ function update() {
     if (a.x > 560) a.vx = -Math.abs(a.vx);
 
     const bi = bullets.findIndex(b =>
-      overlap(a, b) &&
-      (difficulty === 1 || centerHit(a, b, 45, 40))
+      difficulty.tightAlienHitbox
+        ? ellipseHit(a, b, 0.8)
+        : overlap(a, b)
     );
 
     if (bi !== -1) {
@@ -340,8 +418,9 @@ function update() {
       }
     }
 
-    const hit = overlap(a, ship) &&
-      (difficulty === 1 || centerHit(a, ship, 45, 40));
+    const hit = difficulty.tightAlienHitbox
+      ? ellipseHit(a, ship, 0.8)
+      : overlap(a, ship);
 
     if (hit) {
       loseLife();

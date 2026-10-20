@@ -168,47 +168,41 @@ function drawMenu() {
     return;
   }
 
-  text("SPACE SHOOTER", 300, 150, 46);
+  text("SPACE SHOOTER", 300, 130, 42);
 
   const L = MENU_LAYOUT;
 
-  // Easy
-  button(L.easy);
-  text("EASY", L.easy.x + L.easy.w / 2, L.easy.y + 42, 26);
+  // Difficulty buttons (EASY / NORMAL / HARD / INSANE).
+  for (let i = 0; i < DIFFICULTY_LAYOUT.length; i++) {
+    const r = DIFFICULTY_LAYOUT[i];
+    const diff = DIFFICULTIES[i];
 
-  // Hard
-  button(L.hard);
-  text("HARD", L.hard.x + L.hard.w / 2, L.hard.y + 42, 26);
-
-  plainText(
-    "TIP: in hard mode you can shoot the meteors",
-    300, 430, 17, "#c3c8dc"
-  );
+    button(r);
+    text(diff.name, r.x + r.w / 2, r.y + r.h / 2 + 9, 24);
+  }
 
   // Auto-shoot button
   button(L.auto, autoShoot);
   text(
     "AUTO-SHOOT: " + (autoShoot ? "ON" : "OFF"),
     L.auto.x + L.auto.w / 2,
-    L.auto.y + 38,
-    22
+    L.auto.y + 34,
+    20
   );
 
   // Settings button
   button(L.settings);
-  text("SETTINGS", L.settings.x + L.settings.w / 2, L.settings.y + 36, 20);
-
-  plainText(
-    isMobile
-      ? "Touch controls enabled"
-      : "WASD / Arrows · Space · P · Esc",
-    300, 620, 15, "#c3c8dc"
+  text(
+    "SETTINGS",
+    L.settings.x + L.settings.w / 2,
+    L.settings.y + 34,
+    20
   );
 
   if (imageStatus.menu === "error") {
     plainText(
       "Background not loaded – fallback active",
-      300, 680, 14, "#ffe4a6"
+      300, 690, 14, "#ffe4a6"
     );
   }
 }
@@ -320,8 +314,8 @@ function drawPauseButton() {
   ctx.stroke();
 
   ctx.fillStyle = "#ffffff";
-  ctx.fillRect(b.x + 14, b.y + 11, 6, 18);
-  ctx.fillRect(b.x + 24, b.y + 11, 6, 18);
+  ctx.fillRect(b.x + 17, b.y + 13, 7, 20);
+  ctx.fillRect(b.x + 28, b.y + 13, 7, 20);
 }
 
 function drawPauseOverlay() {

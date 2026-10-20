@@ -64,6 +64,14 @@ window.addEventListener("keydown", e => {
       startGame(2);
     }
 
+    if (mode === "menu" && k === "3") {
+      startGame(3);
+    }
+
+    if (mode === "menu" && k === "4") {
+      startGame(4);
+    }
+
     if (mode === "menu" && k === "escape" && menuSettingsOpen) {
       menuSettingsOpen = false;
     }
@@ -146,15 +154,12 @@ canvas.addEventListener("pointerdown", e => {
       return;
     }
 
-    // Difficulty selection
-    if (inRect(p, L.easy)) {
-      startGame(1);
-      return;
-    }
-
-    if (inRect(p, L.hard)) {
-      startGame(2);
-      return;
+    // Difficulty selection (EASY / NORMAL / HARD / INSANE).
+    for (let i = 0; i < DIFFICULTY_LAYOUT.length; i++) {
+      if (inRect(p, DIFFICULTY_LAYOUT[i])) {
+        startGame(DIFFICULTIES[i].id);
+        return;
+      }
     }
 
     return;
