@@ -342,6 +342,26 @@ function drawGameOver() {
   text("Press R or click to return", 300, 540, 20);
 }
 
+function drawHearts(x, y, hp, maxHp) {
+  const size = 5;
+  const gap = 13;
+  const total = maxHp * gap - (gap - size * 2);
+  let cx = x - total / 2 + size;
+
+  for (let i = 0; i < maxHp; i++) {
+    ctx.beginPath();
+    ctx.arc(cx, y, size, 0, Math.PI * 2);
+    ctx.fillStyle = i < hp ? "#ff2b2b" : "#4a4a4a";
+    ctx.fill();
+
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = i < hp ? "#7a0000" : "#262626";
+    ctx.stroke();
+
+    cx += gap;
+  }
+}
+
 // --------------------------------------------------
 // GAME RENDERING
 // --------------------------------------------------
@@ -374,8 +394,12 @@ function drawGame() {
       if (!drawImage("alienExplosion", a.x, a.y, 80, 80)) {
         fallbackExplosion(a.x, a.y);
       }
-    } else if (!drawImage("alien", a.x, a.y, 80, 50)) {
-      fallbackAlien(a.x, a.y);
+    } else {
+      if (!drawImage("alien", a.x, a.y, 80, 50)) {
+        fallbackAlien(a.x, a.y);
+      }
+
+      drawHearts(a.x, a.y - 38, a.hp, a.maxHp);
     }
   }
 
