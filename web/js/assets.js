@@ -171,7 +171,10 @@ setInterval(() => {
 
 // Mobile browsers only allow audio after a user gesture and revoke that
 // permission for elements that were never played from a gesture. Unlock
-// every clip on the first interaction so later play() calls succeed.
+// the sound effects on the first interaction so later play() calls
+// succeed. The music element is never muted here: starting a round is
+// itself a gesture, so its play() call is already permitted and must
+// not be disturbed by an unrelated unlock pass.
 let audioUnlocked = false;
 
 function unlockAudio() {
@@ -179,6 +182,8 @@ function unlockAudio() {
   audioUnlocked = true;
 
   for (const key of Object.keys(audioFiles)) {
+    if (key === "music") continue;
+
     const a = audio[key];
 
     try {
@@ -189,14 +194,11 @@ function unlockAudio() {
       if (p && p.then) {
         p.then(() => {
           a.pause();
+          a.currentTime = 0;
           a.muted = false;
-
-          // Music should keep playing if a round is active.
-          if (key === "music" && musicOn &&
-              mode !== "paused" && mode !== "menu") {
-            sound("music");
-          }
         }).catch(() => {
+          a.pause();
+          a.currentTime = 0;
           a.muted = false;
         });
       } else {
@@ -207,9 +209,6 @@ function unlockAudio() {
       a.muted = false;
     }
   }
-
-  // Re-apply the music state now that playback is allowed.
-  refreshMusic();
 }
 
 for (const evt of ["pointerdown", "keydown", "touchstart"]) {
@@ -224,17 +223,6 @@ function applyVolume() {
 
   for (const key of ["shoot", "alienBoom", "meteorBoom"]) {
     audio[key].volume = settings.sfxVol;
-  }
-}
-
-// The music always reflects the slider; muting only pauses playback.
-function refreshMusic() {
-  applyVolume();
-
-  if (!musicOn || mode === "paused" || mode === "menu") {
-    audio.music.pause();
-  } else {
-    sound("music");
   }
 }
 
