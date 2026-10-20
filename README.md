@@ -1,5 +1,16 @@
 # SpaceShooter
 SpaceShooter ist für meine schule und ist ein goofy ahh greenfoot game
+## 🚀 Play SpaceShooter
+
+Play the game directly in your browser!
+
+[![Play SpaceShooter](https://img.shields.io/badge/PLAY-SPACE%20SHOOTER-00d4ff?style=for-the-badge&logo=github)](https://bsxray.github.io/SpaceShooter/)
+
+**Controls**
+- `WASD` / Arrow Keys — Move
+- `Space` — Shoot
+- `P` — Toggle music
+- `1` / `2` — Select difficult
 
 # How to play
 1. Install [Greenfoot](https://www.greenfoot.org/download)
