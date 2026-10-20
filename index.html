@@ -3,380 +3,853 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#090b16">
 <title>Space Shooter</title>
+
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#090b16;color:white;font-family:Arial,sans-serif;
-display:flex;justify-content:center;align-items:center;min-height:100vh}
-main{width:min(600px,100vw,66.6667vh);text-align:center}
-canvas{display:block;width:100%;height:auto;aspect-ratio:2/3;
-background:#10172c;touch-action:none;outline:1px solid #42455d}
-p{font-size:12px;color:#bbb;margin:10px 4px}
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: #090b16;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+main {
+  width: min(600px, 100vw, 66.6667vh);
+  width: min(600px, 100vw, 66.6667dvh);
+  text-align: center;
+  padding: 0;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 3;
+  background: #10172c;
+  outline: 1px solid #42455d;
+  touch-action: none;
+}
+
+.help {
+  font-size: 12px;
+  color: #bbb;
+  line-height: 1.6;
+  margin: 10px 4px;
+}
+
+@media (pointer: coarse) {
+  .help {
+    font-size: 11px;
+  }
+}
 </style>
 </head>
+
 <body>
 <main>
-<canvas id="game" width="600" height="900"></canvas>
-<p>WASD / Pfeiltasten: Bewegung · Leertaste: Schießen · P: Musik</p>
+  <canvas id="game" width="600" height="900"
+          aria-label="Space Shooter Spiel"></canvas>
+  <p class="help" id="help">
+    WASD / Pfeiltasten: Bewegen · Leertaste: Schießen · P: Musik
+  </p>
 </main>
+
 <script>
 "use strict";
 
-const canvas=document.querySelector("#game");
-const ctx=canvas.getContext("2d");
-const W=600,H=900;
-const ROOT="https://raw.githubusercontent.com/BSXRay/SpaceShooter/main/";
+// --------------------------------------------------
+// CANVAS UND ASSETS
+// --------------------------------------------------
 
-const imageNames={
- menu:"backg2.png",
- bg:"backg.png",
- ship:"shooter.png",
- bullet:"geschoss.png",
- meteor:"meteorite.png",
- meteorExplosion:"meteorBoom.png",
- alien:"alien_1.png",
- alienExplosion:"boom.png"
+const canvas = document.querySelector("#game");
+const ctx = canvas.getContext("2d");
+
+const W = 600;
+const H = 900;
+
+const ROOT =
+  "https://raw.githubusercontent.com/BSXRay/SpaceShooter/main/";
+
+const imageNames = {
+  menu: "backg2.png",
+  bg: "backg.png",
+  ship: "shooter.png",
+  bullet: "geschoss.png",
+  meteor: "meteorite.png",
+  meteorExplosion: "meteorBoom.png",
+  alien: "alien_1.png",
+  alienExplosion: "boom.png"
 };
-const imgs={};
-const imageStatus={};
 
-for(const [key,file] of Object.entries(imageNames)){
-  const img=new Image();
-  imgs[key]=img;
-  imageStatus[key]="loading";
-  img.onload=()=>imageStatus[key]="ok";
-  img.onerror=()=>imageStatus[key]="error";
-  img.src=ROOT+"images/"+file;
+const imgs = {};
+const imageStatus = {};
+
+for (const [key, file] of Object.entries(imageNames)) {
+  const img = new Image();
+
+  imgs[key] = img;
+  imageStatus[key] = "loading";
+
+  img.onload = () => imageStatus[key] = "ok";
+  img.onerror = () => imageStatus[key] = "error";
+
+  img.src = ROOT + "images/" + file;
 }
 
-const audioFiles={
- music:"Background_music.mp3",
- shoot:"pew.mp3",
- alienBoom:"boom.mp3",
- meteorBoom:"meteorBoom.mp3"
+// --------------------------------------------------
+// AUDIO
+// --------------------------------------------------
+
+const audioFiles = {
+  music: "Background_music.mp3",
+  shoot: "pew.mp3",
+  alienBoom: "boom.mp3",
+  meteorBoom: "meteorBoom.mp3"
 };
-const audio={};
-for(const [key,file] of Object.entries(audioFiles)){
-  const a=new Audio(ROOT+"sounds/"+file);
-  if(key==="music"){a.loop=true;a.volume=.4;}
-  audio[key]=a;
-}
-function sound(key){
-  const a=audio[key];
-  if(!a)return;
-  try{
-    if(key!=="music")a.currentTime=0;
-    const p=a.play();
-    if(p)p.catch(()=>{});
-  }catch(e){}
-}
-let musicOn=true;
-function toggleMusic(){
-  musicOn=!musicOn;
-  if(musicOn)sound("music");
-  else audio.music.pause();
-}
 
-const keys={};
-let mode="menu",difficulty=0;
-let ship,bullets,meteors,aliens,explosions;
-let lives=5,score=0,ticks=0,meteorTimer=0;
-let lastTime=0,accumulator=0;
-let pointer=null;
+const audio = {};
 
-function reset(){
-  lives=5;score=0;ticks=0;meteorTimer=0;
-  ship={x:300,y:840,w:100,h:120,speed:10,cooldown:0};
-  bullets=[];meteors=[];aliens=[];explosions=[];
-}
-function startGame(d){
-  difficulty=d;
-  reset();
-  mode="playing";
-  audio.music.pause();
-  audio.music.currentTime=0;
-  if(musicOn)sound("music");
-}
-function endGame(){
-  mode="over";
-  audio.music.pause();
-}
-function clampShip(){
-  ship.x=Math.max(50,Math.min(550,ship.x));
-  ship.y=Math.max(60,Math.min(840,ship.y));
-}
+for (const [key, file] of Object.entries(audioFiles)) {
+  const a = new Audio(ROOT + "sounds/" + file);
 
-window.addEventListener("keydown",e=>{
-  const k=e.key.toLowerCase();
-  if([" ","arrowup","arrowdown","arrowleft","arrowright"].includes(k))
-    e.preventDefault();
-  if(!keys[k]){
-    if(k==="p")toggleMusic();
-    if(mode==="menu"&&k==="1")startGame(1);
-    if(mode==="menu"&&k==="2")startGame(2);
-    if(mode==="over"&&(k==="r"||k==="enter"))mode="menu";
+  if (key === "music") {
+    a.loop = true;
+    a.volume = 0.4;
   }
-  keys[k]=true;
-});
-window.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
-window.addEventListener("blur",()=>{for(const k in keys)keys[k]=false;});
 
-function point(e){
-  const r=canvas.getBoundingClientRect();
-  return {x:(e.clientX-r.left)*W/r.width,
-          y:(e.clientY-r.top)*H/r.height};
+  audio[key] = a;
 }
-canvas.addEventListener("pointerdown",e=>{
+
+let musicOn = true;
+
+function sound(key) {
+  const a = audio[key];
+  if (!a) return;
+
+  try {
+    if (key !== "music") {
+      a.currentTime = 0;
+    }
+
+    const result = a.play();
+
+    if (result) {
+      result.catch(() => {});
+    }
+  } catch (e) {
+    // Audio kann vom Browser blockiert werden.
+  }
+}
+
+function toggleMusic() {
+  musicOn = !musicOn;
+
+  if (musicOn) {
+    sound("music");
+  } else {
+    audio.music.pause();
+  }
+}
+
+// --------------------------------------------------
+// GERÄTEERKENNUNG UND STEUERUNG
+// --------------------------------------------------
+
+const isMobile =
+  window.matchMedia("(pointer: coarse)").matches ||
+  /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+document.querySelector("#help").textContent = isMobile
+  ? "Touch: Schiff bewegen · Auto-Shoot im Menü einstellen · P: Musik"
+  : "WASD / Pfeiltasten: Bewegen · Leertaste: Schießen · P: Musik";
+
+// Auf Mobilgeräten standardmäßig aktiv.
+// Auf Desktop standardmäßig deaktiviert.
+let autoShoot = isMobile;
+
+const keys = {};
+
+let mode = "menu";
+let difficulty = 0;
+
+let ship;
+let bullets;
+let meteors;
+let aliens;
+let explosions;
+
+let lives = 5;
+let score = 0;
+let ticks = 0;
+let meteorTimer = 0;
+
+let lastTime = 0;
+let accumulator = 0;
+let pointer = null;
+
+// --------------------------------------------------
+// SPIELINITIALISIERUNG
+// --------------------------------------------------
+
+function reset() {
+  lives = 5;
+  score = 0;
+  ticks = 0;
+  meteorTimer = 0;
+
+  ship = {
+    x: 300,
+    y: 840,
+    w: 100,
+    h: 120,
+    speed: 10,
+    cooldown: 0
+  };
+
+  bullets = [];
+  meteors = [];
+  aliens = [];
+  explosions = [];
+}
+
+function startGame(d) {
+  difficulty = d;
+
+  reset();
+  mode = "playing";
+
+  audio.music.pause();
+  audio.music.currentTime = 0;
+
+  if (musicOn) {
+    sound("music");
+  }
+}
+
+function endGame() {
+  mode = "over";
+  audio.music.pause();
+}
+
+function clampShip() {
+  ship.x = Math.max(50, Math.min(550, ship.x));
+  ship.y = Math.max(60, Math.min(840, ship.y));
+}
+
+// --------------------------------------------------
+// TASTATUR
+// --------------------------------------------------
+
+window.addEventListener("keydown", e => {
+  const k = e.key.toLowerCase();
+
+  if (
+    [" ", "arrowup", "arrowdown", "arrowleft", "arrowright"]
+      .includes(k)
+  ) {
+    e.preventDefault();
+  }
+
+  if (!keys[k]) {
+    if (k === "p") {
+      toggleMusic();
+    }
+
+    if (mode === "menu" && k === "1") {
+      startGame(1);
+    }
+
+    if (mode === "menu" && k === "2") {
+      startGame(2);
+    }
+
+    if (mode === "over" && (k === "r" || k === "enter")) {
+      mode = "menu";
+    }
+
+    // Auto-Shoot auch mit O umschalten.
+    if (k === "o") {
+      autoShoot = !autoShoot;
+    }
+  }
+
+  keys[k] = true;
+});
+
+window.addEventListener("keyup", e => {
+  keys[e.key.toLowerCase()] = false;
+});
+
+window.addEventListener("blur", () => {
+  for (const k in keys) {
+    keys[k] = false;
+  }
+
+  pointer = null;
+});
+
+// --------------------------------------------------
+// MAUS UND TOUCH
+// --------------------------------------------------
+
+function point(e) {
+  const r = canvas.getBoundingClientRect();
+
+  return {
+    x: (e.clientX - r.left) * W / r.width,
+    y: (e.clientY - r.top) * H / r.height
+  };
+}
+
+canvas.addEventListener("pointerdown", e => {
   e.preventDefault();
-  const p=point(e);
-  if(mode==="menu"){
-    startGame(p.y<450?1:2);
+
+  const p = point(e);
+
+  if (mode === "menu") {
+    // Auto-Shoot-Schaltfläche
+    if (
+      p.x >= 150 && p.x <= 450 &&
+      p.y >= 470 && p.y <= 540
+    ) {
+      autoShoot = !autoShoot;
+      return;
+    }
+
+    // Schwierigkeitsauswahl
+    if (p.y >= 270 && p.y < 350) {
+      startGame(1);
+      return;
+    }
+
+    if (p.y >= 350 && p.y < 430) {
+      startGame(2);
+      return;
+    }
+
     return;
   }
-  if(mode==="over"){mode="menu";return;}
-  pointer=p;
-  canvas.setPointerCapture(e.pointerId);
+
+  if (mode === "over") {
+    mode = "menu";
+    return;
+  }
+
+  pointer = p;
+
+  try {
+    canvas.setPointerCapture(e.pointerId);
+  } catch (_) {}
 });
-canvas.addEventListener("pointermove",e=>{
-  if(!pointer||mode!=="playing")return;
-  const p=point(e);
-  ship.x+=p.x-pointer.x;
-  ship.y+=p.y-pointer.y;
-  pointer=p;
+
+canvas.addEventListener("pointermove", e => {
+  if (!pointer || mode !== "playing") return;
+
+  const p = point(e);
+
+  ship.x += p.x - pointer.x;
+  ship.y += p.y - pointer.y;
+
+  pointer = p;
   clampShip();
 });
-canvas.addEventListener("pointerup",()=>pointer=null);
-canvas.addEventListener("pointercancel",()=>pointer=null);
 
-function spawnMeteor(){
-  meteors.push({x:Math.random()*600,y:10,w:60,h:60,
-    speed:3,shootable:difficulty===2,exploding:false,timer:8});
-}
-function spawnAlien(){
-  const vx=Math.random()<.5?-3:3;
-  aliens.push({x:Math.random()*600,y:10,w:80,h:50,
-    vx,vy:2+(difficulty===2?Math.floor(ticks/300):0),
-    hp:3,exploding:false,timer:8});
-}
-function explode(x,y,type){
-  explosions.push({x,y,type,timer:8});
-}
-function overlap(a,b){
-  return Math.abs(a.x-b.x)<(a.w+b.w)/2 &&
-         Math.abs(a.y-b.y)<(a.h+b.h)/2;
-}
-function centerHit(a,b,rx,ry){
-  return Math.abs(a.x-b.x)<=rx&&Math.abs(a.y-b.y)<=ry;
-}
-function loseLife(n=1){
-  lives-=n;
-  if(lives<=0){lives=0;endGame();}
+canvas.addEventListener("pointerup", () => {
+  pointer = null;
+});
+
+canvas.addEventListener("pointercancel", () => {
+  pointer = null;
+});
+
+// --------------------------------------------------
+// GEGNER UND KOLLISIONEN
+// --------------------------------------------------
+
+function spawnMeteor() {
+  meteors.push({
+    x: Math.random() * W,
+    y: 10,
+    w: 60,
+    h: 60,
+    speed: 3,
+    shootable: difficulty === 2,
+    exploding: false,
+    timer: 8
+  });
 }
 
-function update(){
-  if(mode!=="playing")return;
+function spawnAlien() {
+  const vx = Math.random() < 0.5 ? -3 : 3;
+
+  aliens.push({
+    x: Math.random() * W,
+    y: 10,
+    w: 80,
+    h: 50,
+    vx,
+    vy: 2 + (
+      difficulty === 2
+        ? Math.floor(ticks / 300)
+        : 0
+    ),
+    hp: 3,
+    exploding: false,
+    timer: 8
+  });
+}
+
+function explode(x, y, type) {
+  explosions.push({ x, y, type, timer: 8 });
+}
+
+function overlap(a, b) {
+  return (
+    Math.abs(a.x - b.x) < (a.w + b.w) / 2 &&
+    Math.abs(a.y - b.y) < (a.h + b.h) / 2
+  );
+}
+
+function centerHit(a, b, rx, ry) {
+  return (
+    Math.abs(a.x - b.x) <= rx &&
+    Math.abs(a.y - b.y) <= ry
+  );
+}
+
+function loseLife(n = 1) {
+  lives -= n;
+
+  if (lives <= 0) {
+    lives = 0;
+    endGame();
+  }
+}
+
+// --------------------------------------------------
+// SPIELLOGIK
+// --------------------------------------------------
+
+function update() {
+  if (mode !== "playing") return;
+
   ticks++;
 
-  if(keys.arrowleft||keys.a)ship.x-=ship.speed;
-  if(keys.arrowright||keys.d)ship.x+=ship.speed;
-  if(keys.arrowup||keys.w)ship.y-=ship.speed;
-  if(keys.arrowdown||keys.s)ship.y+=ship.speed;
+  // Bewegung
+  if (keys.arrowleft || keys.a) ship.x -= ship.speed;
+  if (keys.arrowright || keys.d) ship.x += ship.speed;
+  if (keys.arrowup || keys.w) ship.y -= ship.speed;
+  if (keys.arrowdown || keys.s) ship.y += ship.speed;
+
   clampShip();
 
-  if(ship.cooldown>0)ship.cooldown--;
-  if(keys[" "]&&ship.cooldown===0){
-    bullets.push({x:ship.x,y:ship.y-65,w:80,h:60,speed:10});
-    ship.cooldown=10;
+  // Schießen
+  if (ship.cooldown > 0) {
+    ship.cooldown--;
+  }
+
+  if ((keys[" "] || autoShoot) && ship.cooldown === 0) {
+    bullets.push({
+      x: ship.x,
+      y: ship.y - 65,
+      w: 80,
+      h: 60,
+      speed: 10
+    });
+
+    ship.cooldown = 10;
     sound("shoot");
   }
 
+  // Meteoriten
   meteorTimer++;
-  if(meteorTimer>=(difficulty===2?25:50)){
-    meteorTimer=0;
+
+  if (meteorTimer >= (difficulty === 2 ? 25 : 50)) {
+    meteorTimer = 0;
     spawnMeteor();
   }
-  if(Math.random()*100<(difficulty===2?2:1))spawnAlien();
 
-  for(const b of bullets)b.y-=b.speed;
-  bullets=bullets.filter(b=>b.y>-40);
+  // UFOs
+  if (Math.random() * 100 < (difficulty === 2 ? 2 : 1)) {
+    spawnAlien();
+  }
 
-  for(const m of meteors){
-    if(m.exploding){m.timer--;continue;}
-    m.y+=m.speed;
+  // Projektile
+  for (const b of bullets) {
+    b.y -= b.speed;
+  }
 
-    if(m.shootable){
-      const i=bullets.findIndex(b=>overlap(m,b));
-      if(i!==-1){
-        bullets.splice(i,1);
-        m.exploding=true;m.timer=8;
-        explode(m.x,m.y,"meteorExplosion");
+  bullets = bullets.filter(b => b.y > -40);
+
+  // Meteoriten aktualisieren
+  for (const m of meteors) {
+    if (m.exploding) {
+      m.timer--;
+      continue;
+    }
+
+    m.y += m.speed;
+
+    if (m.shootable) {
+      const i = bullets.findIndex(b => overlap(m, b));
+
+      if (i !== -1) {
+        bullets.splice(i, 1);
+
+        m.exploding = true;
+        m.timer = 8;
+
+        explode(m.x, m.y, "meteorExplosion");
         sound("meteorBoom");
         continue;
       }
     }
 
-    if(centerHit(m,ship,35,45)){
+    if (centerHit(m, ship, 35, 45)) {
       loseLife(1);
-      m.remove=true;
+      m.remove = true;
     }
-    if(m.y+30>=H)m.remove=true;
+
+    if (m.y + 30 >= H) {
+      m.remove = true;
+    }
   }
-  meteors=meteors.filter(m=>!m.remove&&(!m.exploding||m.timer>0));
 
-  for(const a of aliens){
-    if(a.exploding){a.timer--;continue;}
-    a.x+=a.vx;a.y+=a.vy;
-    if(Math.random()<1/150)a.vx=-a.vx;
-    if(a.x<40)a.vx=Math.abs(a.vx);
-    if(a.x>560)a.vx=-Math.abs(a.vx);
+  meteors = meteors.filter(
+    m => !m.remove && (!m.exploding || m.timer > 0)
+  );
 
-    const bi=bullets.findIndex(b=>
-      overlap(a,b)&&(difficulty===1||centerHit(a,b,45,40)));
-    if(bi!==-1){
-      bullets.splice(bi,1);
+  // UFOs aktualisieren
+  for (const a of aliens) {
+    if (a.exploding) {
+      a.timer--;
+      continue;
+    }
+
+    a.x += a.vx;
+    a.y += a.vy;
+
+    if (Math.random() < 1 / 150) {
+      a.vx = -a.vx;
+    }
+
+    if (a.x < 40) a.vx = Math.abs(a.vx);
+    if (a.x > 560) a.vx = -Math.abs(a.vx);
+
+    const bi = bullets.findIndex(b =>
+      overlap(a, b) &&
+      (difficulty === 1 || centerHit(a, b, 45, 40))
+    );
+
+    if (bi !== -1) {
+      bullets.splice(bi, 1);
       a.hp--;
-      if(a.hp<=0){
-        lives=Math.min(5,lives+1);
+
+      if (a.hp <= 0) {
+        lives = Math.min(5, lives + 1);
         score++;
-        a.exploding=true;a.timer=8;
-        explode(a.x,a.y,"alienExplosion");
+
+        a.exploding = true;
+        a.timer = 8;
+
+        explode(a.x, a.y, "alienExplosion");
         sound("alienBoom");
         continue;
       }
     }
 
-    const hit=overlap(a,ship)&&
-      (difficulty===1||centerHit(a,ship,45,40));
-    if(hit){
+    const hit = overlap(a, ship) &&
+      (difficulty === 1 || centerHit(a, ship, 45, 40));
+
+    if (hit) {
       loseLife();
-      score=Math.max(0,score-1);
-      a.remove=true;
-    }else if(a.y+a.h/2>=H){
+      score = Math.max(0, score - 1);
+      a.remove = true;
+    } else if (a.y + a.h / 2 >= H) {
       loseLife();
-      score=Math.max(0,score-1);
-      a.remove=true;
+      score = Math.max(0, score - 1);
+      a.remove = true;
     }
   }
-  aliens=aliens.filter(a=>!a.remove&&(!a.exploding||a.timer>0));
 
-  for(const e of explosions)e.timer--;
-  explosions=explosions.filter(e=>e.timer>0);
+  aliens = aliens.filter(
+    a => !a.remove && (!a.exploding || a.timer > 0)
+  );
+
+  // Explosionen
+  for (const e of explosions) {
+    e.timer--;
+  }
+
+  explosions = explosions.filter(e => e.timer > 0);
 }
 
-function drawImage(key,x,y,w,h){
-  const img=imgs[key];
-  if(imageStatus[key]==="ok"){
-    ctx.drawImage(img,x-w/2,y-h/2,w,h);
+// --------------------------------------------------
+// ZEICHNEN UND ASSET-FALLBACKS
+// --------------------------------------------------
+
+function drawImage(key, x, y, w, h) {
+  const img = imgs[key];
+
+  if (imageStatus[key] === "ok") {
+    ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
     return true;
   }
+
   return false;
 }
-function background(key){
-  if(!drawImage(key,300,450,600,900)){
-    ctx.fillStyle="#080e24";ctx.fillRect(0,0,W,H);
-    // Visible fallback starfield while original background loads.
-    ctx.fillStyle="#aab9df";
-    for(let i=0;i<90;i++){
-      const x=(i*137+19)%W,y=(i*251+31)%H;
-      ctx.fillRect(x,y,2,2);
+
+function background(key) {
+  if (!drawImage(key, 300, 450, 600, 900)) {
+    ctx.fillStyle = "#080e24";
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = "#aab9df";
+
+    for (let i = 0; i < 90; i++) {
+      const x = (i * 137 + 19) % W;
+      const y = (i * 251 + 31) % H;
+
+      ctx.fillRect(x, y, 2, 2);
     }
   }
 }
-function fallbackShip(){
-  ctx.fillStyle="#59cfff";
-  ctx.beginPath();
-  ctx.moveTo(ship.x,ship.y-50);
-  ctx.lineTo(ship.x-42,ship.y+40);
-  ctx.lineTo(ship.x,ship.y+23);
-  ctx.lineTo(ship.x+42,ship.y+40);
-  ctx.closePath();ctx.fill();
-}
-function fallbackMeteor(x,y){
-  ctx.fillStyle="#777b8b";
-  ctx.beginPath();ctx.arc(x,y,25,0,Math.PI*2);ctx.fill();
-}
-function fallbackAlien(x,y){
-  ctx.fillStyle="#62edbd";
-  ctx.beginPath();ctx.ellipse(x,y,38,20,0,0,Math.PI*2);ctx.fill();
-}
-function fallbackExplosion(x,y){
-  ctx.fillStyle="#ff9d40";
-  ctx.beginPath();ctx.arc(x,y,25,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle="#fff2a0";
-  ctx.beginPath();ctx.arc(x,y,11,0,Math.PI*2);ctx.fill();
-}
-function text(str,x,y,size=24,align="center"){
-  ctx.fillStyle="white";
-  ctx.font="bold "+size+"px Arial";
-  ctx.textAlign=align;
-  ctx.fillText(str,x,y);
-}
-function drawMenu(){
-  background("menu");
-  text("SPACE SHOOTER",300,150,46);
-  text("press 1 for EASY",300,320,26);
-  text("press 2 for HARD",300,370,26);
-  text("TIP: in hard mode you can shoot the meteors",300,430,20);
 
-  // Mouse/touch-friendly start choices.
-  ctx.strokeStyle="rgba(255,255,255,.5)";
-  ctx.lineWidth=2;
-  ctx.strokeRect(130,275,340,65);
-  ctx.strokeRect(130,340,340,65);
-  if(imageStatus.menu==="error"){
-    ctx.font="14px Arial";ctx.fillStyle="#ffe4a6";
-    ctx.fillText("Hintergrund nicht geladen – Spiel bleibt spielbar",300,500);
+function fallbackShip() {
+  ctx.fillStyle = "#59cfff";
+
+  ctx.beginPath();
+  ctx.moveTo(ship.x, ship.y - 50);
+  ctx.lineTo(ship.x - 42, ship.y + 40);
+  ctx.lineTo(ship.x, ship.y + 23);
+  ctx.lineTo(ship.x + 42, ship.y + 40);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function fallbackMeteor(x, y) {
+  ctx.fillStyle = "#777b8b";
+  ctx.beginPath();
+  ctx.arc(x, y, 25, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function fallbackAlien(x, y) {
+  ctx.fillStyle = "#62edbd";
+  ctx.beginPath();
+  ctx.ellipse(x, y, 38, 20, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function fallbackExplosion(x, y) {
+  ctx.fillStyle = "#ff9d40";
+  ctx.beginPath();
+  ctx.arc(x, y, 25, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#fff2a0";
+  ctx.beginPath();
+  ctx.arc(x, y, 11, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function text(str, x, y, size = 24, align = "center") {
+  ctx.fillStyle = "white";
+  ctx.font = "bold " + size + "px Arial";
+  ctx.textAlign = align;
+  ctx.fillText(str, x, y);
+}
+
+// --------------------------------------------------
+// HAUPTMENÜ MIT AUTO-SHOOT-TOGGLE
+// --------------------------------------------------
+
+function drawMenu() {
+  background("menu");
+
+  text("SPACE SHOOTER", 300, 150, 46);
+
+  // Easy
+  ctx.fillStyle = "#202e4b";
+  ctx.fillRect(130, 275, 340, 65);
+
+  ctx.strokeStyle = "#a6caff";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(130, 275, 340, 65);
+
+  text("press 1 for EASY", 300, 316, 26);
+
+  // Hard
+  ctx.fillStyle = "#202e4b";
+  ctx.fillRect(130, 350, 340, 65);
+
+  ctx.strokeStyle = "#a6caff";
+  ctx.strokeRect(130, 350, 340, 65);
+
+  text("press 2 for HARD", 300, 391, 26);
+
+  text(
+    "TIP: in hard mode you can shoot the meteors",
+    300, 445, 17
+  );
+
+  // Auto-Shoot-Schaltfläche
+  ctx.fillStyle = autoShoot ? "#145c49" : "#303448";
+  ctx.fillRect(150, 475, 300, 65);
+
+  ctx.strokeStyle = autoShoot ? "#54ffc5" : "#777b96";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(150, 475, 300, 65);
+
+  text(
+    "AUTO-SHOOT: " + (autoShoot ? "ON" : "OFF"),
+    300, 515, 22
+  );
+
+  ctx.fillStyle = "#d0d4e5";
+  ctx.font = "16px Arial";
+  ctx.textAlign = "center";
+
+  ctx.fillText(
+    isMobile
+      ? "Tippe zum Umschalten"
+      : "Klicken zum Umschalten · O als Tastenkürzel",
+    300, 570
+  );
+
+  ctx.fillStyle = "#c3c8dc";
+  ctx.font = "15px Arial";
+
+  ctx.fillText(
+    isMobile
+      ? "Touch-Steuerung aktiviert"
+      : "WASD / Pfeiltasten · Leertaste · P",
+    300, 620
+  );
+
+  if (imageStatus.menu === "error") {
+    ctx.fillStyle = "#ffe4a6";
+    ctx.font = "14px Arial";
+
+    ctx.fillText(
+      "Hintergrund nicht geladen – Fallback aktiv",
+      300, 680
+    );
   }
 }
-function drawGame(){
+
+// --------------------------------------------------
+// SPIELZEICHNUNG
+// --------------------------------------------------
+
+function drawGame() {
   background("bg");
 
-  for(const b of bullets){
-    if(!drawImage("bullet",b.x,b.y,b.w,b.h)){
-      ctx.fillStyle="#ffe879";ctx.fillRect(b.x-3,b.y-15,6,30);
+  // Projektile
+  for (const b of bullets) {
+    if (!drawImage("bullet", b.x, b.y, b.w, b.h)) {
+      ctx.fillStyle = "#ffe879";
+      ctx.fillRect(b.x - 3, b.y - 15, 6, 30);
     }
   }
-  for(const m of meteors){
-    if(m.exploding){
-      if(!drawImage("meteorExplosion",m.x,m.y,60,60))fallbackExplosion(m.x,m.y);
-    }else if(!drawImage("meteor",m.x,m.y,60,60))fallbackMeteor(m.x,m.y);
-  }
-  for(const a of aliens){
-    if(a.exploding){
-      if(!drawImage("alienExplosion",a.x,a.y,80,80))fallbackExplosion(a.x,a.y);
-    }else if(!drawImage("alien",a.x,a.y,80,50))fallbackAlien(a.x,a.y);
-  }
 
-  if(!drawImage("ship",ship.x,ship.y,100,120))fallbackShip();
-
-  for(const e of explosions){
-    ctx.globalAlpha=Math.max(0,e.timer/8);
-    fallbackExplosion(e.x,e.y);
-    ctx.globalAlpha=1;
+  // Meteoriten
+  for (const m of meteors) {
+    if (m.exploding) {
+      if (!drawImage("meteorExplosion", m.x, m.y, 60, 60)) {
+        fallbackExplosion(m.x, m.y);
+      }
+    } else if (!drawImage("meteor", m.x, m.y, 60, 60)) {
+      fallbackMeteor(m.x, m.y);
+    }
   }
 
-  text("LIVES: "+lives,15,30,24,"left");
-  text("SCORE: "+score,585,30,24,"right");
+  // UFOs
+  for (const a of aliens) {
+    if (a.exploding) {
+      if (!drawImage("alienExplosion", a.x, a.y, 80, 80)) {
+        fallbackExplosion(a.x, a.y);
+      }
+    } else if (!drawImage("alien", a.x, a.y, 80, 50)) {
+      fallbackAlien(a.x, a.y);
+    }
+  }
 
-  if(mode==="over"){
-    ctx.fillStyle="rgba(0,0,0,.55)";
-    ctx.fillRect(0,0,W,H);
-    text("GAME OVER",300,420,46);
-    text("SCORE: "+score,300,480,30);
-    text("Press R or click to return",300,540,20);
+  // Spieler
+  if (!drawImage("ship", ship.x, ship.y, 100, 120)) {
+    fallbackShip();
+  }
+
+  // Explosionen
+  for (const e of explosions) {
+    ctx.globalAlpha = Math.max(0, e.timer / 8);
+    fallbackExplosion(e.x, e.y);
+    ctx.globalAlpha = 1;
+  }
+
+  // HUD
+  text("LIVES: " + lives, 15, 30, 24, "left");
+  text("SCORE: " + score, 585, 30, 24, "right");
+
+  if (autoShoot) {
+    ctx.fillStyle = "#54ffc5";
+    ctx.font = "bold 14px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("AUTO", 300, 30);
+  }
+
+  // Game Over
+  if (mode === "over") {
+    ctx.fillStyle = "rgba(0,0,0,.65)";
+    ctx.fillRect(0, 0, W, H);
+
+    text("GAME OVER", 300, 420, 46);
+    text("SCORE: " + score, 300, 480, 30);
+    text("Press R or click to return", 300, 540, 20);
   }
 }
-function frame(time){
-  if(!lastTime)lastTime=time;
-  accumulator+=Math.min(time-lastTime,100);
-  lastTime=time;
-  while(accumulator>=20){
-    update();
-    accumulator-=20;
+
+// --------------------------------------------------
+// GAME LOOP
+// --------------------------------------------------
+
+function frame(time) {
+  if (!lastTime) {
+    lastTime = time;
   }
-  if(mode==="menu")drawMenu();
-  else drawGame();
+
+  accumulator += Math.min(time - lastTime, 100);
+  lastTime = time;
+
+  // 50 Updates pro Sekunde
+  while (accumulator >= 20) {
+    update();
+    accumulator -= 20;
+  }
+
+  if (mode === "menu") {
+    drawMenu();
+  } else {
+    drawGame();
+  }
+
   requestAnimationFrame(frame);
 }
 
