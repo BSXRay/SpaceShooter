@@ -267,6 +267,24 @@ function sound(key) {
   playClip(key);
 }
 
+// Restarts the background music from the beginning. Must be called from
+// within a user gesture. It intentionally does not pause() first: a
+// pause() immediately before play() in the same frame leaves some mobile
+// browsers silent until the next gesture. The music is already stopped
+// while in the menu, so only the reset and play are needed here.
+function startMusic() {
+  const a = audio.music;
+  if (!a) return;
+
+  try {
+    a.currentTime = 0;
+  } catch (e) {
+    // Some browsers reject seeking before metadata is loaded.
+  }
+
+  sound("music");
+}
+
 function toggleMusic() {
   musicOn = !musicOn;
 

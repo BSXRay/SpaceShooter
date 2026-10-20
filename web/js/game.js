@@ -164,11 +164,8 @@ function startGame(id) {
   reset();
   mode = "playing";
 
-  audio.music.pause();
-  audio.music.currentTime = 0;
-
   if (musicOn) {
-    sound("music");
+    startMusic();
   }
 }
 
