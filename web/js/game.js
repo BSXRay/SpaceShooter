@@ -21,16 +21,54 @@ let meteorTimer = 0;
 let lastTime = 0;
 let accumulator = 0;
 
-// Hitboxes for the pause button and the pause menu (canvas space).
+// Hitboxes for menu, pause button and overlays (canvas space).
+const MENU_LAYOUT = {
+  easy: { x: 130, y: 260, w: 340, h: 65 },
+  hard: { x: 130, y: 335, w: 340, h: 65 },
+  auto: { x: 150, y: 450, w: 300, h: 60 },
+  settings: { x: 150, y: 525, w: 300, h: 55 }
+};
+
 const PAUSE_BTN = { x: 12, y: 12, w: 44, h: 40 };
 const PAUSE_RESUME_BTN = { x: 150, y: 400, w: 300, h: 65 };
 const PAUSE_MENU_BTN = { x: 150, y: 490, w: 300, h: 65 };
+
+// Settings screen sliders (canvas space).
+const SETTINGS_BACK_BTN = { x: 150, y: 640, w: 300, h: 60 };
+const SETTINGS_SLIDERS = {
+  musicVol: { x: 150, y: 350, w: 300, h: 12 },
+  sfxVol: { x: 150, y: 470, w: 300, h: 12 }
+};
+
+let menuSettingsOpen = false;
+
+const settings = {
+  musicVol: 0.4,
+  sfxVol: 0.8
+};
 
 function inRect(p, r) {
   return (
     p.x >= r.x && p.x <= r.x + r.w &&
     p.y >= r.y && p.y <= r.y + r.h
   );
+}
+
+// Returns the horizontal value (0..1) for a slider given a point.
+function sliderValue(p, slider) {
+  const t = (p.x - slider.x) / slider.w;
+  return Math.max(0, Math.min(1, t));
+}
+
+function sliderHit(p, slider) {
+  const pad = 22;
+
+  return inRect(p, {
+    x: slider.x - pad,
+    y: slider.y - pad,
+    w: slider.w + pad * 2,
+    h: slider.h + pad * 2
+  });
 }
 
 // --------------------------------------------------

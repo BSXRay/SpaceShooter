@@ -28,4 +28,5 @@ function frame(time) {
 }
 
 reset();
+applyVolume();
 requestAnimationFrame(frame);

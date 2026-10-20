@@ -9,6 +9,7 @@ html, body {
   background: #090b16;
   color: white;
   font-family: Arial, sans-serif;
+  overscroll-behavior: none;
 }
 
 body {
@@ -44,8 +45,35 @@ canvas {
   margin: 10px 4px;
 }
 
+/* Fill the entire screen on touch devices: the canvas grows to the
+   height and width available, keeping its 2:3 aspect ratio centered. */
 @media (pointer: coarse) {
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    min-height: 100dvh;
+  }
+
+  main {
+    width: 100vw;
+    height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  canvas {
+    width: auto;
+    height: 100dvh;
+    max-width: 100vw;
+    max-height: 100dvh;
+    outline: none;
+  }
+
   .help {
-    font-size: 11px;
+    display: none;
   }
 }

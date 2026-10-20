@@ -163,32 +163,40 @@ function drawMenu() {
 
   dim(0.25);
 
+  if (menuSettingsOpen) {
+    drawSettings();
+    return;
+  }
+
   text("SPACE SHOOTER", 300, 150, 46);
 
+  const L = MENU_LAYOUT;
+
   // Easy
-  button({ x: 130, y: 275, w: 340, h: 65 });
-  text("EASY", 300, 316, 26);
+  button(L.easy);
+  text("EASY", L.easy.x + L.easy.w / 2, L.easy.y + 42, 26);
 
   // Hard
-  button({ x: 130, y: 350, w: 340, h: 65 });
-  text("HARD", 300, 391, 26);
+  button(L.hard);
+  text("HARD", L.hard.x + L.hard.w / 2, L.hard.y + 42, 26);
 
   plainText(
     "TIP: in hard mode you can shoot the meteors",
-    300, 445, 17, "#c3c8dc"
+    300, 430, 17, "#c3c8dc"
   );
 
   // Auto-shoot button
-  const auto = { x: 150, y: 475, w: 300, h: 65 };
-  button(auto, autoShoot);
-  text("AUTO-SHOOT: " + (autoShoot ? "ON" : "OFF"), 300, 515, 22);
-
-  plainText(
-    isMobile
-      ? "Tap to toggle"
-      : "Click to toggle · O as shortcut",
-    300, 570
+  button(L.auto, autoShoot);
+  text(
+    "AUTO-SHOOT: " + (autoShoot ? "ON" : "OFF"),
+    L.auto.x + L.auto.w / 2,
+    L.auto.y + 38,
+    22
   );
+
+  // Settings button
+  button(L.settings);
+  text("SETTINGS", L.settings.x + L.settings.w / 2, L.settings.y + 36, 20);
 
   plainText(
     isMobile
@@ -203,6 +211,72 @@ function drawMenu() {
       300, 680, 14, "#ffe4a6"
     );
   }
+}
+
+// --------------------------------------------------
+// SETTINGS SCREEN
+// --------------------------------------------------
+
+function slider(p, label, value) {
+  // Label
+  text(label, 300, p.y - 40, 22);
+
+  // Track
+  ctx.fillStyle = "rgba(10,14,28,.85)";
+  roundRect(p.x, p.y, p.w, p.h, p.h / 2);
+  ctx.fill();
+
+  ctx.strokeStyle = "#3b4666";
+  ctx.lineWidth = 2;
+  roundRect(p.x, p.y, p.w, p.h, p.h / 2);
+  ctx.stroke();
+
+  // Filled part
+  const w = Math.max(p.h, p.w * value);
+
+  const grad = ctx.createLinearGradient(p.x, 0, p.x + p.w, 0);
+  grad.addColorStop(0, "#3f7bd6");
+  grad.addColorStop(1, "#54ffc5");
+
+  ctx.fillStyle = grad;
+  roundRect(p.x, p.y, w, p.h, p.h / 2);
+  ctx.fill();
+
+  // Knob
+  const kx = p.x + p.w * value;
+
+  ctx.save();
+  ctx.shadowColor = "#7fe6ff";
+  ctx.shadowBlur = 16;
+  ctx.fillStyle = "#eaf6ff";
+  ctx.beginPath();
+  ctx.arc(kx, p.y + p.h / 2, 15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.strokeStyle = "#7fb2ff";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(kx, p.y + p.h / 2, 15, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Value
+  plainText(Math.round(value * 100) + "%", 300, p.y + 55, 18, "#c3c8dc");
+}
+
+function drawSettings() {
+  text("SETTINGS", 300, 170, 44);
+
+  slider(SETTINGS_SLIDERS.musicVol, "MUSIC VOLUME", settings.musicVol);
+  slider(SETTINGS_SLIDERS.sfxVol, "SFX VOLUME", settings.sfxVol);
+
+  button(SETTINGS_BACK_BTN);
+  text(
+    "BACK",
+    SETTINGS_BACK_BTN.x + SETTINGS_BACK_BTN.w / 2,
+    SETTINGS_BACK_BTN.y + 39,
+    24
+  );
 }
 
 // --------------------------------------------------

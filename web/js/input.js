@@ -18,6 +18,7 @@ let autoShoot = isMobile;
 
 const keys = {};
 let pointer = null;
+let dragSlider = null;
 
 function clearKeys() {
   for (const k in keys) {
@@ -25,6 +26,7 @@ function clearKeys() {
   }
 
   pointer = null;
+  dragSlider = null;
 }
 
 // --------------------------------------------------
@@ -60,6 +62,10 @@ window.addEventListener("keydown", e => {
 
     if (mode === "menu" && k === "2") {
       startGame(2);
+    }
+
+    if (mode === "menu" && k === "escape" && menuSettingsOpen) {
+      menuSettingsOpen = false;
     }
 
     if (mode === "over" && (k === "r" || k === "enter")) {
@@ -110,22 +116,43 @@ canvas.addEventListener("pointerdown", e => {
   const p = point(e);
 
   if (mode === "menu") {
+    if (menuSettingsOpen) {
+      if (sliderHit(p, SETTINGS_SLIDERS.musicVol)) {
+        dragSlider = "musicVol";
+        settings.musicVol = sliderValue(p, SETTINGS_SLIDERS.musicVol);
+        applyVolume();
+      } else if (sliderHit(p, SETTINGS_SLIDERS.sfxVol)) {
+        dragSlider = "sfxVol";
+        settings.sfxVol = sliderValue(p, SETTINGS_SLIDERS.sfxVol);
+        applyVolume();
+      } else if (inRect(p, SETTINGS_BACK_BTN)) {
+        menuSettingsOpen = false;
+      }
+
+      return;
+    }
+
+    const L = MENU_LAYOUT;
+
     // Auto-shoot button
-    if (
-      p.x >= 150 && p.x <= 450 &&
-      p.y >= 470 && p.y <= 540
-    ) {
+    if (inRect(p, L.auto)) {
       autoShoot = !autoShoot;
       return;
     }
 
+    // Settings button
+    if (inRect(p, L.settings)) {
+      menuSettingsOpen = true;
+      return;
+    }
+
     // Difficulty selection
-    if (p.y >= 270 && p.y < 350) {
+    if (inRect(p, L.easy)) {
       startGame(1);
       return;
     }
 
-    if (p.y >= 350 && p.y < 430) {
+    if (inRect(p, L.hard)) {
       startGame(2);
       return;
     }
@@ -162,6 +189,14 @@ canvas.addEventListener("pointerdown", e => {
 });
 
 canvas.addEventListener("pointermove", e => {
+  if (dragSlider) {
+    const p = point(e);
+
+    settings[dragSlider] = sliderValue(p, SETTINGS_SLIDERS[dragSlider]);
+    applyVolume();
+    return;
+  }
+
   if (!pointer || mode !== "playing") return;
 
   const p = point(e);
@@ -175,8 +210,10 @@ canvas.addEventListener("pointermove", e => {
 
 canvas.addEventListener("pointerup", () => {
   pointer = null;
+  dragSlider = null;
 });
 
 canvas.addEventListener("pointercancel", () => {
   pointer = null;
+  dragSlider = null;
 });

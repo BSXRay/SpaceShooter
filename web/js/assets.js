@@ -65,6 +65,26 @@ for (const [key, file] of Object.entries(audioFiles)) {
 
 let musicOn = true;
 
+// Applies the current music/SFX volume from `settings` to all audio.
+function applyVolume() {
+  audio.music.volume = settings.musicVol;
+
+  for (const key of ["shoot", "alienBoom", "meteorBoom"]) {
+    audio[key].volume = settings.sfxVol;
+  }
+}
+
+// The music always reflects the slider; muting only pauses playback.
+function refreshMusic() {
+  applyVolume();
+
+  if (!musicOn || mode === "paused" || mode === "menu") {
+    audio.music.pause();
+  } else {
+    sound("music");
+  }
+}
+
 function sound(key) {
   const a = audio[key];
   if (!a) return;
