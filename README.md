@@ -19,7 +19,27 @@ Play the game directly in your browser!
 git clone https://github.com/BSXRay/SpaceShooter
 ```
 4. Unzip the downloaded file
-5. Open the folder in Greenfoot
+5. Open the **`greenfoot`** folder in Greenfoot
+
+The original Greenfoot project lives in `greenfoot/` and is self-contained:
+the Java sources, the compiled classes, `project.greenfoot` and its own
+copies of the `images/` and `sounds/` folders (Greenfoot only finds
+resources next to `project.greenfoot`).
+
+## Repository structure
+
+```
+web/          the browser game (index.html, css, js) - shared by website and app
+images/       shared image assets
+sounds/       shared sound assets
+android-app/  Capacitor Android app, loader and OTA update tooling
+greenfoot/    the original Greenfoot project
+doc/ -> greenfoot/doc/   generated Javadoc of the Greenfoot classes
+```
+
+The website and the Android app ship the exact same `web/`, `images/` and
+`sounds/` files. See [ANDROID_SETUP.md](ANDROID_SETUP.md) for the app, the
+signed OTA updates and the release process.
 # Controls
 * **A** | **<-** Left
 * **D** | **->** Right

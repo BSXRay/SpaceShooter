@@ -18,6 +18,8 @@ web/                shared game code (HTML/CSS/JS)   <- single source of truth
 images/             shared images
 sounds/             shared sounds
 
+greenfoot/          the original Greenfoot project (self-contained, not shipped)
+
 android-app/
   package.json              Capacitor project + scripts
   capacitor.config.json     Capacitor config (appId, webDir=www, updater)
