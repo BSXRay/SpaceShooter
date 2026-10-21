@@ -84,6 +84,11 @@ export function runLoaderTests(report) {
   async function runScenario(name, opts) {
     const calls = { download: 0, set: 0, next: 0, notify: 0, reset: 0 };
 
+    // Resolved on the first terminal action so we don't depend on a fixed
+    // number of event-loop ticks (which varies across Node/CI versions).
+    let signalDone;
+    const done = new Promise((r) => { signalDone = r; });
+
     const root = {
       // ---- element stubs ----
       getElementById: () => makeEl(),
@@ -106,8 +111,8 @@ export function runLoaderTests(report) {
     const updater = {
       current: async () => ({ bundle: { version: "1.0.0" } }),
       getFailedUpdate: async () => opts.failed || null,
-      reset: async () => { calls.reset++; },
-      notifyAppReady: async () => { calls.notify++; },
+      reset: async () => { calls.reset++; signalDone(); },
+      notifyAppReady: async () => { calls.notify++; signalDone(); },
       download: async (o) => {
         calls.download++;
         if (opts.downloadReject) throw new Error("checksum mismatch");
@@ -115,9 +120,10 @@ export function runLoaderTests(report) {
       },
       set: async () => {
         calls.set++;
+        signalDone();
         if (opts.setReject) throw new Error("set failed");
       },
-      next: async () => { calls.next++; },
+      next: async () => { calls.next++; signalDone(); },
       delete: async () => {}
     };
 
@@ -195,8 +201,11 @@ export function runLoaderTests(report) {
 
     vm.runInContext(loaderSrc, sandbox, { filename: "loader.js" });
 
-    // Let the async boot chain settle.
-    for (let i = 0; i < 50; i++) {
+    // Wait for the boot chain to reach a terminal action (notify/set/reset/
+    // next). Fall back to draining the event loop if none happens.
+    const timeout = new Promise((r) => setTimeout(r, 4000));
+    await Promise.race([done, timeout]);
+    for (let i = 0; i < 5; i++) {
       await new Promise((r) => setImmediate(r));
     }
 
