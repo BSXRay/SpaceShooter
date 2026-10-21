@@ -11,6 +11,12 @@
     "androidScheme": "https"
   },
   "plugins": {
+    "SystemBars": {
+      "insetsHandling": "disable",
+      "hidden": true,
+      "style": "dark",
+      "initialViewportFitValueHint": "cover"
+    },
     "SplashScreen": {
       "launchShowDuration": 0,
       "launchAutoHide": true,

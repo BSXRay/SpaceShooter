@@ -55,6 +55,7 @@ canvas {
 
   body {
     min-height: 100dvh;
+    background: #090b16;
   }
 
   main {
@@ -66,10 +67,12 @@ canvas {
   }
 
   canvas {
-    width: auto;
-    height: 100dvh;
-    max-width: 100vw;
-    max-height: 100dvh;
+    /* Fit the 2:3 canvas into the available area without exceeding it,
+       so the game is as large as possible on any device. */
+    width: min(100vw, calc(100dvh * 2 / 3));
+    height: min(100dvh, calc(100vw * 3 / 2));
+    /* Blend with the page background so the letterbox area is seamless. */
+    background: #090b16;
     outline: none;
   }
 
