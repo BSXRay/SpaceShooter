@@ -63,12 +63,14 @@ canvas {
 
   main {
     width: 100vw;
+    height: 100vh;
     height: 100dvh;
     display: block;
   }
 
   canvas {
     width: 100vw;
+    height: 100vh;
     height: 100dvh;
     aspect-ratio: auto;
     background: #090b16;
