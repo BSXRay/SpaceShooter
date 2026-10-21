@@ -86,6 +86,21 @@ JAVA_HOME          = path to JDK 21
 On the Android app itself: `minSdk 24`, `targetSdk 36`, portrait orientation,
 immersive fullscreen, cleartext traffic disabled.
 
+### Display and play field
+
+The game is one shared web codebase for the website and the app. Its world
+is always **600 units wide**; the **height follows the display aspect
+ratio** (`web/js/assets.js` → `resizeGame()`). On a portrait phone the
+canvas therefore covers the whole screen: no letterbox bars and no
+distortion, and the taller play field gives more room to dodge. The canvas
+backing store is sized in device pixels and a canvas transform maps the
+world units onto it, so the game stays sharp on high density displays.
+
+Menus and overlays are laid out relative to the world height and shrink on
+short displays (`layoutUI()` in `web/js/game.js`), which keeps every button
+reachable. The desktop website keeps the classic 2:3 ratio via CSS, so it
+is unaffected.
+
 > **OTA update requirement:** verifying signed updates uses **Ed25519 in
 > WebCrypto**, which needs **Android System WebView / Chrome 137+**. On older
 > WebViews the game still plays the installed version, but it will *not*
