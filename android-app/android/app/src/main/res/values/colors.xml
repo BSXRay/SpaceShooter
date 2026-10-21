@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#090b16</color>
+    <color name="colorPrimaryDark">#090b16</color>
+    <color name="colorAccent">#4fc3f7</color>
+
+    <!-- Matches the game/loader background (web/index.html body). -->
+    <color name="gameBackground">#090b16</color>
+</resources>

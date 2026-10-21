@@ -1,9 +1,11 @@
 package io.github.bsxray.spaceshooter;
 
+import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.WebView;
 
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -13,15 +15,29 @@ import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
 
+    // Matches the game/loader background (see colors.xml gameBackground).
+    private static final int GAME_BACKGROUND = 0xFF090B16;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Draw behind the system bars so the game canvas can fill the screen.
+        // Draw behind the system bars so the game canvas can fill the screen,
+        // and make the window background dark so the edge-to-edge system-bar
+        // areas are not the default grey.
+        getWindow().setBackgroundDrawable(
+                new ColorDrawable(GAME_BACKGROUND));
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
         // Keep the screen on while playing.
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        // Dark WebView background + no white/grey overscroll glow.
+        WebView webView = getBridge() != null ? getBridge().getWebView() : null;
+        if (webView != null) {
+            webView.setBackgroundColor(GAME_BACKGROUND);
+            webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        }
 
         applyImmersiveMode();
     }
