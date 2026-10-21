@@ -23,7 +23,7 @@ greenfoot/          the original Greenfoot project (self-contained, not shipped)
 android-app/
   package.json              Capacitor project + scripts
   capacitor.config.json     Capacitor config (appId, webDir=www, updater)
-  version.json              current web version (semver)
+  version.json              current web version (semver, set by the release tag)
   loader/                   Android-only boot/update screen (injected into index.html)
     loader.css
     loader.js               boot + update logic
@@ -36,14 +36,19 @@ android-app/
     run-tests.mjs           unit + artifact tests
     loader-tests.mjs        loader boot/update integration tests (mocked)
     keygen.mjs              generates a signing keypair
+  signing/                  private OTA key (gitignored)
+  keystore/                 private Android release key (gitignored)
+  keystore.properties       local signing config (gitignored)
   www/                      GENERATED (gitignored) — the Capacitor web bundle
   dist/                     GENERATED (gitignored) — release artifacts
   android/                  native Android project (Capacitor)
 
 .github/workflows/
   pages.yml                 existing: deploys the website (UNCHANGED)
-  release-bundle.yml        NEW: builds + signs + publishes the OTA bundle
-  android-build.yml         NEW: builds the APK
+  release-bundle.yml        NEW: builds + signs the OTA bundle AND the APK,
+                            publishes the GitHub Release on a version tag
+  android-build.yml         NEW: builds the debug APK + a signed release APK
+                            (both as artifacts, for testing without a tag)
 ```
 
 ### Boot / update flow
@@ -154,6 +159,36 @@ Paste the new public key into `loader/updater-config.js`, store the new private
 key as the `SS_UPDATE_SIGNING_KEY` secret, and rebuild the APK. (Rotating the
 key requires shipping a new APK, because the public key is embedded.)
 
+> **Status:** `SS_UPDATE_SIGNING_KEY` is already set in the repository
+> secrets. You can check with `gh secret list`.
+
+### 3.3 Signing key for the release APK
+
+The **APK** needs a second, independent key: the Android release key proves
+that the APK comes from you, and it is what the Play Store checks when you
+publish an update.
+
+- Keystore: `android-app/keystore/spaceshooter-release.keystore`
+- Alias: `spaceshooter` (RSA 4096, PKCS#12, valid for 30 years)
+
+The keystore is **never committed** (`android-app/.gitignore` excludes
+`keystore/`, `*.keystore`, `*.p12`, `keystore.properties`). CI receives it
+through four repository secrets:
+
+| Secret | Value |
+|--------|-------|
+| `ANDROID_KEYSTORE_BASE64` | base64 of the keystore file |
+| `ANDROID_KEYSTORE_PASSWORD` | keystore password |
+| `ANDROID_KEY_ALIAS` | `spaceshooter` |
+| `ANDROID_KEY_PASSWORD` | key password |
+
+`gh secret set ANDROID_KEYSTORE_BASE64 --body "<base64>"` (or pipe the value
+into `gh secret set ANDROID_KEYSTORE_BASE64`) adds them.
+
+> **Back up the keystore file.** Without it you can never publish an update
+> to an already installed app — Android rejects APKs signed with a different
+> key. Keep a copy outside the repository (e.g. in a password manager).
+
 ---
 
 ## 4. Building
@@ -219,10 +254,22 @@ Covered by the automated tests:
 
 ## 5. Publishing a new game version (release flow)
 
-1. **Set the new version** (semver, e.g. `1.2.0`) in
-   `android-app/version.json`.
+**One tag produces everything:** the signed OTA bundle *and* the signed APK.
+The tag is the single source of truth for the version number — the workflow
+writes `android-app/version.json` from the tag, so the APK version, the bundle
+version and the release title can never drift apart.
 
-2. **Commit and push** your game changes (to `main`).
+### 5.1 The normal case: a change to the game (web code)
+
+1. **Change the game** in `web/`, `images/` or `sounds/`.
+
+2. **Commit and push to `main`:**
+
+   ```powershell
+   git add -A
+   git commit -m "feat: ..."
+   git push origin main
+   ```
 
 3. **Create and push a version tag:**
 
@@ -231,23 +278,60 @@ Covered by the automated tests:
    git push origin v1.2.0
    ```
 
-4. The **`Release Android web bundle`** workflow (`.github/workflows/release-bundle.yml`)
-   automatically:
-   - builds the web bundle,
-   - runs the tests,
-   - creates the bundle zip + signed manifest,
-   - verifies them,
-   - publishes a **stable, non-prerelease** GitHub Release `v1.2.0` with:
-     - `web-bundle-1.2.0.zip`
-     - `web-manifest-1.2.0.txt`
-     - `release-info.json`
+4. The **`Release Android web bundle`** workflow
+   (`.github/workflows/release-bundle.yml`) automatically:
+   - builds the web bundle from `web/` + `images/` + `sounds/` + `loader/`,
+   - runs the test suite,
+   - creates the bundle zip and signs the manifest with the Ed25519 key,
+   - verifies the artifacts (signature, SHA-256, entries),
+   - builds the **signed release APK** (`assembleRelease`) and verifies its
+     signature with `apksigner`,
+   - publishes a **stable, non-prerelease** GitHub Release `v1.2.0` containing:
+     - `spaceshooter-1.2.0.apk` — the installable Android app
+     - `web-bundle-1.2.0.zip` — the OTA payload
+     - `web-manifest-1.2.0.txt` — the signed manifest
+     - `release-info.json` — build metadata
 
-5. Installed apps will pick up the update on their next start.
+5. **That is all.** Installed apps pick up the new game version on their next
+   start — no store upload, no APK download, nothing to do on the device.
+   Only native changes (permissions, app name, icons, embedded keys) require
+   the new APK to be installed.
+
+### 5.2 Checklist before you tag
+
+```powershell
+npm --prefix android-app test     # tests must pass
+npm --prefix android-app run build:web
+```
+
+The workflow runs the same checks, but a red test costs a failed release run.
+
+### 5.3 New device installation
+
+The APK of the newest release is the installable app:
+
+```
+https://github.com/BSXRay/SpaceShooter/releases/latest
+```
+
+Download `spaceshooter-<version>.apk`, allow "install unknown apps" and
+install it. An already installed app can be updated with the same APK
+(same signing key) — or just wait for the OTA update.
+
+### 5.4 Patch releases / hotfixes
+
+If only the game changed, bump the **patch** level (`v1.2.1`). The app compares
+semver and installs the newest stable release. Skipping versions is fine; the
+app always jumps to the newest one.
 
 To publish without tagging (testing the workflow), run the workflow manually
 with the `version` input. **Note:** the manifest URL points at
 `.../releases/download/v<version>/...`, so the assets only resolve correctly
 when a matching tag/release exists.
+
+> The version in `android-app/version.json` is overwritten by the workflow
+> from the tag. Keeping it in sync manually is not required, but it makes the
+> local build match the release.
 
 ---
 
@@ -305,28 +389,65 @@ the GitHub Actions secret) are accepted.
 
 ---
 
-## 7. Release APK signing (when you publish to a store)
+## 7. Release APK signing
 
 The debug APK is signed with the debug key and is fine for testing/sideloading.
-For a store release:
+The distributable build is a **signed release APK** and is produced
+automatically by the release workflow (section 5).
 
-1. Create a keystore:
+### 7.1 How the signing material reaches Gradle
 
-   ```powershell
-   keytool -genkeypair -v -keystore spaceshooter-release.jks `
-     -alias spaceshooter -keyalg RSA -keysize 2048 -validity 10000
+`android-app/android/app/build.gradle` looks for the key in this order:
+
+1. **Environment variables** (used by CI):
+   `ANDROID_KEYSTORE_PATH`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`,
+   `ANDROID_KEY_PASSWORD`.
+2. **`android-app/keystore.properties`** (local builds, gitignored):
+
+   ```properties
+   storeFile=C:\\Users\\<you>\\...\\spaceshooter-release.keystore
+   storePassword=...
+   keyAlias=spaceshooter
+   keyPassword=...
    ```
 
-2. Add a `signingConfigs` block + reference it in `buildTypes.release` in
-   `android-app/android/app/build.gradle`. Keep the keystore **out of git**
-   (`android-app/.gitignore` already excludes `*.jks`, `*.keystore`, `*.p12`).
+If neither is available the release build still succeeds but stays **unsigned**
+(Gradle prints a warning). CI fails the release run instead, because a release
+without a signature is useless.
 
-3. Build the release:
+### 7.2 Local release build
 
-   ```powershell
-   cd android-app/android
-   ./gradlew assembleRelease    # or bundleRelease for AAB
-   ```
+```powershell
+cd android-app/android
+./gradlew assembleRelease    # or bundleRelease for AAB
+```
+
+The APK lands in
+`android-app/android/app/build/outputs/apk/release/app-release.apk`.
+
+Verify the signature yourself with the Android SDK build tools:
+
+```powershell
+$env:ANDROID_HOME = "$env:LOCALAPPDATA\Android\Sdk"
+& "$env:ANDROID_HOME\build-tools\36.0.0\apksigner" verify --verbose --print-certs `
+  android-app\android\app\build\outputs\apk\release\app-release.apk
+```
+
+### 7.3 Creating a new keystore
+
+Only necessary if the old one is lost. **Keep the same alias and a safe copy.**
+
+```powershell
+keytool -genkeypair -v -keystore spaceshooter-release.keystore `
+  -alias spaceshooter -keyalg RSA -keysize 4096 -validity 10950 `
+  -storetype PKCS12
+```
+
+Then update the four secrets in section 3.3 and rebuild the APK.
+
+> Android identifies an app by its signing key. A new keystore means a
+> **different** app: users would have to uninstall the old one first and lose
+> their data. Never regenerate the release key casually.
 
 ---
 
@@ -360,4 +481,21 @@ npm run open:android        # open in Android Studio
 $env:SS_UPDATE_SIGNING_KEY = Get-Content signing\SS_UPDATE_SIGNING_KEY.pem -Raw
 node scripts/make-bundle.mjs 1.2.0
 node scripts/verify-release.mjs 1.2.0
+
+# local release APK (needs keystore.properties, see section 7)
+cd android
+./gradlew assembleRelease
 ```
+
+### Publishing (the three commands that matter)
+
+```powershell
+git add -A
+git commit -m "feat: ..."
+git push origin main
+git tag v1.2.0
+git push origin v1.2.0
+```
+
+The tag starts the release workflow; the installed app picks the new version
+up on its next start. Full details in section 5.

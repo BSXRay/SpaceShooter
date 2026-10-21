@@ -40,6 +40,26 @@ doc/ -> greenfoot/doc/   generated Javadoc of the Greenfoot classes
 The website and the Android app ship the exact same `web/`, `images/` and
 `sounds/` files. See [ANDROID_SETUP.md](ANDROID_SETUP.md) for the app, the
 signed OTA updates and the release process.
+
+# Releases & Auto-Update
+
+The Android app updates itself: it checks GitHub Releases on startup, verifies
+the download with a signature and installs the new version. To publish a change:
+
+```powershell
+git add -A
+git commit -m "feat: ..."
+git push origin main
+git tag v1.2.0
+git push origin v1.2.0
+```
+
+The tag makes GitHub Actions build the game, sign it, build the signed APK and
+publish the release. Installed apps pick the new version up on their next
+start — nothing has to be re-installed. Only changes to the native app
+(permissions, name, icon) require the new APK from
+[Releases](https://github.com/BSXRay/SpaceShooter/releases/latest).
+
 # Controls
 * **A** | **<-** Left
 * **D** | **->** Right
