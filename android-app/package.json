@@ -1,0 +1,27 @@
+{
+  "name": "spaceshooter-android",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Android loader / wrapper for the SpaceShooter web game (Capacitor).",
+  "scripts": {
+    "build:web": "node scripts/build-web.mjs",
+    "bundle": "node scripts/make-bundle.mjs",
+    "test": "node scripts/run-tests.mjs",
+    "sync": "npm run build:web && cap sync android",
+    "open:android": "cap open android",
+    "build:android:debug": "npm run sync && cd android && gradlew.bat assembleDebug -x lint",
+    "build:android:debug:unix": "npm run sync && cd android && ./gradlew assembleDebug -x lint"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.0.2",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/screen-orientation": "^8.0.2",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capgo/capacitor-updater": "^8.53.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.3",
+    "@capgo/cli": "^8.90.2"
+  }
+}

@@ -1,0 +1,33 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Generated web bundle (rebuilt by npm run build:web)
+www/
+
+# Built release artifacts (rebuilt by npm run bundle)
+dist/
+# Stray bundle zips produced by manual CLI runs
+*.zip
+
+# Capacitor sync outputs are generated from the shared web code
+android/app/src/main/assets/public/
+
+# Android local/build outputs
+android/local.properties
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/
+
+# NEVER commit signing material
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+signing/
+
+# Editor
+.vscode/
+.idea/

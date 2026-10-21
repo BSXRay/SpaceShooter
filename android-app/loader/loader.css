@@ -1,0 +1,125 @@
+/* SpaceShooter Android loader — boot / update screen.
+   Sits above the game canvas until boot completes, then fades out. */
+
+#loader-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #17204a 0%, #090b16 60%),
+    #090b16;
+  color: #eef1ff;
+  font-family: Arial, Helvetica, sans-serif;
+  opacity: 1;
+  transition: opacity .35s ease;
+  -webkit-user-select: none;
+  user-select: none;
+  padding: max(16px, env(safe-area-inset-top))
+           max(16px, env(safe-area-inset-right))
+           max(16px, env(safe-area-inset-bottom))
+           max(16px, env(safe-area-inset-left));
+}
+
+#loader-root.ldr-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ldr-card {
+  width: min(420px, 92vw);
+  text-align: center;
+}
+
+.ldr-logo {
+  font-size: clamp(28px, 9vw, 44px);
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: #ffffff;
+  text-shadow: 0 0 18px rgba(0, 212, 255, .55);
+}
+
+.ldr-logo span {
+  color: #00d4ff;
+}
+
+.ldr-version {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #93a0c8;
+  letter-spacing: .5px;
+}
+
+.ldr-status {
+  margin-top: 26px;
+  font-size: 15px;
+  color: #cdd6f4;
+  min-height: 20px;
+}
+
+.ldr-bar {
+  margin: 14px auto 0;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .10);
+  overflow: hidden;
+}
+
+.ldr-bar-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #00d4ff, #7fb2ff);
+  transition: width .25s ease;
+}
+
+.ldr-state {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #7f8bb3;
+  min-height: 16px;
+}
+
+.ldr-retry,
+.ldr-play {
+  margin-top: 22px;
+  padding: 12px 26px;
+  border: 0;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.ldr-play {
+  background: linear-gradient(180deg, #00d4ff, #0093d6);
+  color: #04121c;
+}
+
+.ldr-retry {
+  background: linear-gradient(180deg, #ffd24a, #e0a800);
+  color: #241c00;
+}
+
+.ldr-error {
+  margin-top: 18px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #ff9d9d;
+  background: rgba(255, 60, 60, .08);
+  border: 1px solid rgba(255, 60, 60, .3);
+  border-radius: 12px;
+  padding: 12px 14px;
+  text-align: left;
+  word-break: break-word;
+}
+
+@media (pointer: coarse) {
+  html, body {
+    overscroll-behavior: none;
+  }
+}

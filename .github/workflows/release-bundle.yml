@@ -1,0 +1,122 @@
+name: Release Android web bundle
+
+# Publishes a signed OTA web bundle as GitHub Release assets so the
+# installed Android app can update itself. Triggered by pushing a
+# version tag like v1.2.0.
+#
+# Produces (per release):
+#   web-bundle-<version>.zip    the Capacitor web bundle
+#   web-manifest-<version>.txt  <base64 Ed25519 signature>\n<json manifest>
+#   release-info.json           checksum / size / signing info
+#
+# The manifest is signed with the SS_UPDATE_SIGNING_KEY secret. The matching
+# public key is embedded in android-app/loader/updater-config.js.
+#
+# This workflow does NOT modify the existing Pages deployment workflow.
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g. 1.2.0). Must match a pushed tag for asset URLs to work."
+        required: true
+
+# Least privilege: only what the release job needs.
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android-app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: android-app/package-lock.json
+
+      - name: Resolve version
+        id: ver
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            V="${{ github.event.inputs.version }}"
+          else
+            V="${GITHUB_REF_NAME#v}"
+          fi
+          if ! [[ "$V" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version '$V' is not semver (x.y.z)"
+            exit 1
+          fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $V"
+
+      - name: Write version.json
+        shell: bash
+        run: |
+          cat > version.json <<EOF
+          {
+            "version": "${{ steps.ver.outputs.version }}",
+            "appId": "io.github.bsxray.spaceshooter",
+            "channel": "stable"
+          }
+          EOF
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web bundle
+        run: npm run build:web
+
+      - name: Run tests
+        run: npm test
+
+      - name: Make signed release artifacts
+        env:
+          SS_UPDATE_SIGNING_KEY: ${{ secrets.SS_UPDATE_SIGNING_KEY }}
+        shell: bash
+        run: |
+          if [ -z "$SS_UPDATE_SIGNING_KEY" ]; then
+            echo "::error::SS_UPDATE_SIGNING_KEY secret is not set. Refusing to publish an unsigned release."
+            exit 1
+          fi
+          node scripts/make-bundle.mjs "${{ steps.ver.outputs.version }}"
+
+      - name: Verify release artifacts
+        run: node scripts/verify-release.mjs "${{ steps.ver.outputs.version }}"
+
+      - name: Ensure artifacts are non-empty
+        shell: bash
+        run: |
+          V="${{ steps.ver.outputs.version }}"
+          test -s "dist/web-bundle-$V.zip" || { echo "::error::bundle missing/empty"; exit 1; }
+          test -s "dist/web-manifest-$V.txt" || { echo "::error::manifest missing/empty"; exit 1; }
+
+      - name: Upload release assets to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          name: v${{ steps.ver.outputs.version }}
+          prerelease: false
+          draft: false
+          fail_on_unmatched_files: true
+          # Only the OTA assets; the APK is built/attached separately by the
+          # Android build (see android-app workflow) to keep this job focused.
+          files: |
+            android-app/dist/web-bundle-${{ steps.ver.outputs.version }}.zip
+            android-app/dist/web-manifest-${{ steps.ver.outputs.version }}.txt
+            android-app/dist/release-info.json
