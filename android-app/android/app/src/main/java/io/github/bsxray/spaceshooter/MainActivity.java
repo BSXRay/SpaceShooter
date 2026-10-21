@@ -20,17 +20,23 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // Must be set BEFORE super.onCreate(), which inflates the WebView and
+        // can otherwise reserve space for the system bars (grey top strip).
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        getWindow().setBackgroundDrawable(new ColorDrawable(GAME_BACKGROUND));
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         super.onCreate(savedInstanceState);
 
-        // Draw behind the system bars so the game canvas can fill the screen,
-        // and make the window background dark so the edge-to-edge system-bar
-        // areas are not the default grey.
-        getWindow().setBackgroundDrawable(
-                new ColorDrawable(GAME_BACKGROUND));
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-
-        // Keep the screen on while playing.
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        // Keep the content edge-to-edge: ignore any inset padding Capacitor may
+        // have applied to the WebView so the game draws under the status bar.
+        View content = findViewById(android.R.id.content);
+        if (content != null) {
+            content.setOnApplyWindowInsetsListener((v, insets) -> {
+                v.setPadding(0, 0, 0, 0);
+                return insets;
+            });
+        }
 
         // Dark WebView background + no white/grey overscroll glow.
         WebView webView = getBridge() != null ? getBridge().getWebView() : null;
