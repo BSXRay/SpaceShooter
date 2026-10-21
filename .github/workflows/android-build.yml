@@ -80,7 +80,9 @@ jobs:
             echo "::error::No APK produced"
             exit 1
           fi
-          echo "path=$APK" >> "$GITHUB_OUTPUT"
+          # upload-artifact resolves paths from the workspace root, not the
+          # job working-directory, so emit an absolute path.
+          echo "path=$PWD/$APK" >> "$GITHUB_OUTPUT"
           echo "name=$(basename "$APK")" >> "$GITHUB_OUTPUT"
           ls -la "$APK"
 
