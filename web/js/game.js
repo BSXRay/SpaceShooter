@@ -160,6 +160,38 @@ const SETTINGS_SLIDERS = {
   sfxVol: { x: 150, y: 470, w: 300, h: 12 }
 };
 
+// Recomputes the position and size of every UI element for the current
+// world height. The stored values are the 900 unit design positions:
+// menus and overlays stay vertically centered, bottom anchored elements
+// follow the lower edge. On short displays the whole interface shrinks.
+function layoutUI() {
+  const L = MENU_LAYOUT;
+
+  L.easy.y = midY(210);
+  L.normal.y = midY(286);
+  L.hard.y = midY(362);
+  L.insane.y = midY(438);
+  L.auto.y = midY(536);
+  L.settings.y = midY(606);
+
+  L.easy.h = L.normal.h = L.hard.h = L.insane.h = 62 * uiScale;
+  L.auto.h = L.settings.h = 56 * uiScale;
+
+  PAUSE_RESUME_BTN.y = midY(400);
+  PAUSE_MENU_BTN.y = midY(490);
+  PAUSE_RESUME_BTN.h = PAUSE_MENU_BTN.h = 65 * uiScale;
+
+  SETTINGS_BACK_BTN.y = midY(640);
+  SETTINGS_BACK_BTN.h = 60 * uiScale;
+
+  SETTINGS_SLIDERS.musicVol.y = midY(350);
+  SETTINGS_SLIDERS.sfxVol.y = midY(470);
+  SETTINGS_SLIDERS.musicVol.h = SETTINGS_SLIDERS.sfxVol.h = 12 * uiScale;
+
+  AWARD.BADGE_Y = midY(640);
+  AWARD.SLOT_Y = H - 42;
+}
+
 let menuSettingsOpen = false;
 
 const settings = {
@@ -203,7 +235,7 @@ function reset() {
 
   ship = {
     x: 300,
-    y: 840,
+    y: H - 60,
     w: 100,
     h: 120,
     hitW: 56,
@@ -270,7 +302,7 @@ function toMainMenu() {
 
 function clampShip() {
   ship.x = Math.max(50, Math.min(550, ship.x));
-  ship.y = Math.max(60, Math.min(840, ship.y));
+  ship.y = Math.max(60, Math.min(H - 60, ship.y));
 }
 
 // --------------------------------------------------

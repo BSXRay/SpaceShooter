@@ -45,9 +45,12 @@ canvas {
   margin: 10px 4px;
 }
 
-/* Fill the entire screen on touch devices: the canvas grows to the
-   height and width available, keeping its 2:3 aspect ratio centered. */
-@media (pointer: coarse) {
+/* Fill the entire screen on touch devices in portrait: the canvas covers
+   the whole display. The game adapts its world height to the display
+   aspect ratio, so there is neither a letterbox nor any distortion.
+   Landscape keeps the classic 2:3 ratio, which fits a wide screen far
+   better than an extremely flat play field. */
+@media (pointer: coarse) and (orientation: portrait) {
   html, body {
     height: 100%;
     overflow: hidden;
@@ -61,17 +64,13 @@ canvas {
   main {
     width: 100vw;
     height: 100dvh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
   }
 
   canvas {
-    /* Fit the 2:3 canvas into the available area without exceeding it,
-       so the game is as large as possible on any device. */
-    width: min(100vw, calc(100dvh * 2 / 3));
-    height: min(100dvh, calc(100vw * 3 / 2));
-    /* Blend with the page background so the letterbox area is seamless. */
+    width: 100vw;
+    height: 100dvh;
+    aspect-ratio: auto;
     background: #090b16;
     outline: none;
   }

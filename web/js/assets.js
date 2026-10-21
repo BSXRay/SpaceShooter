@@ -7,8 +7,55 @@
 const canvas = document.querySelector("#game");
 const ctx = canvas.getContext("2d");
 
-const W = 600;
-const H = 900;
+// The game world is always 600 units wide. The height adapts to the
+// display aspect ratio, so the game fills the whole screen on tall
+// phones instead of being letterboxed. On desktop the canvas keeps the
+// classic 2:3 ratio via CSS, which yields the original 900 unit height.
+const DESIGN_H = 900;
+
+// Scale factor of the user interface. The interface is designed for a
+// 900 unit tall world. On shorter displays it shrinks so that menus and
+// overlays always fit on screen.
+let uiScale = 1;
+
+// Device pixels per world unit. Used to keep canvas filters (which work
+// in device pixels) at a constant visual size.
+let worldScale = 1;
+
+let W = 600;
+let H = DESIGN_H;
+
+// Maps a y coordinate of the 900 unit design layout to the current world
+// height. Menus and overlays stay vertically centered on any screen.
+function midY(designY) {
+  return H / 2 + (designY - DESIGN_H / 2) * uiScale;
+}
+
+// Sizes the canvas to the display and updates the world height.
+// The canvas backing store uses device pixels; a canvas transform maps
+// the world units (600 wide) onto it, so all drawing code keeps working
+// in world coordinates.
+function resizeGame() {
+  const cssW = canvas.clientWidth || W;
+  const cssH = canvas.clientHeight || (cssW * DESIGN_H) / W;
+  const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+
+  H = Math.max(200, Math.round((W * cssH) / cssW));
+  uiScale = Math.min(1, H / DESIGN_H);
+
+  canvas.width = Math.round(cssW * dpr);
+  canvas.height = Math.round(cssH * dpr);
+
+  // Must come after the size assignment: that resets the context state.
+  worldScale = canvas.width / W;
+  ctx.setTransform(worldScale, 0, 0, canvas.height / H, 0, 0);
+
+  layoutUI();
+
+  if (ship) {
+    clampShip();
+  }
+}
 
 // Assets are served from the same origin as the page (fast, cached).
 // When that fails (e.g. opened locally without the copied asset folders),

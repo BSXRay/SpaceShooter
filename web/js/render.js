@@ -16,18 +16,30 @@ function drawImage(key, x, y, w, h) {
 }
 
 function background(key) {
-  if (!drawImage(key, 300, 450, 600, 900)) {
-    ctx.fillStyle = "#080e24";
-    ctx.fillRect(0, 0, W, H);
+  const img = imgs[key];
 
-    ctx.fillStyle = "#aab9df";
+  if (imageStatus[key] === "ok") {
+    // Cover the world without distorting the artwork: scale the source
+    // up until both edges are filled and crop the overflow.
+    const scale = Math.max(W / img.width, H / img.height);
+    const w = img.width * scale;
+    const h = img.height * scale;
 
-    for (let i = 0; i < 90; i++) {
-      const x = (i * 137 + 19) % W;
-      const y = (i * 251 + 31) % H;
+    ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
 
-      ctx.fillRect(x, y, 2, 2);
-    }
+    return;
+  }
+
+  ctx.fillStyle = "#080e24";
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = "#aab9df";
+
+  for (let i = 0; i < 90; i++) {
+    const x = (i * 137 + 19) % W;
+    const y = (i * 251 + 31) % H;
+
+    ctx.fillRect(x, y, 2, 2);
   }
 }
 
@@ -121,14 +133,14 @@ function easeInOut(t) {
 
 function text(str, x, y, size = 24, align = "center") {
   ctx.fillStyle = "white";
-  ctx.font = "bold " + size + "px Arial";
+  ctx.font = "bold " + size * uiScale + "px Arial";
   ctx.textAlign = align;
   ctx.fillText(str, x, y);
 }
 
 function plainText(str, x, y, size = 16, color = "#d0d4e5") {
   ctx.fillStyle = color;
-  ctx.font = size + "px Arial";
+  ctx.font = size * uiScale + "px Arial";
   ctx.textAlign = "center";
   ctx.fillText(str, x, y);
 }
@@ -195,7 +207,9 @@ function dim(alpha = 0.55) {
 function blurBackdrop(px = 6) {
   ctx.save();
   ctx.globalAlpha = 0.9;
-  ctx.filter = "blur(" + px + "px)";
+  // Canvas filters work in device pixels, so the radius has to be scaled
+  // to keep the blur radius constant in world units.
+  ctx.filter = "blur(" + px * worldScale + "px)";
   ctx.drawImage(canvas, 0, 0, W, H);
   ctx.restore();
   ctx.filter = "none";
@@ -218,7 +232,7 @@ function drawMenu() {
     return;
   }
 
-  text("SPACE SHOOTER", 300, 130, 42);
+  text("SPACE SHOOTER", 300, midY(130), 42);
 
   const L = MENU_LAYOUT;
 
@@ -252,7 +266,7 @@ function drawMenu() {
   if (imageStatus.menu === "error") {
     plainText(
       "Background not loaded – fallback active",
-      300, 690, 14, "#ffe4a6"
+      300, midY(690), 14, "#ffe4a6"
     );
   }
 }
@@ -263,7 +277,7 @@ function drawMenu() {
 
 function slider(p, label, value) {
   // Label
-  text(label, 300, p.y - 40, 22);
+  text(label, 300, p.y - 40 * uiScale, 22);
 
   // Track
   ctx.fillStyle = "rgba(10,14,28,.85)";
@@ -305,11 +319,14 @@ function slider(p, label, value) {
   ctx.stroke();
 
   // Value
-  plainText(Math.round(value * 100) + "%", 300, p.y + 55, 18, "#c3c8dc");
+  plainText(
+    Math.round(value * 100) + "%",
+    300, p.y + 55 * uiScale, 18, "#c3c8dc"
+  );
 }
 
 function drawSettings() {
-  text("SETTINGS", 300, 170, 44);
+  text("SETTINGS", 300, midY(170), 44);
 
   slider(SETTINGS_SLIDERS.musicVol, "MUSIC VOLUME", settings.musicVol);
   slider(SETTINGS_SLIDERS.sfxVol, "SFX VOLUME", settings.sfxVol);
@@ -372,24 +389,24 @@ function drawPauseOverlay() {
   blurBackdrop(8);
   dim(0.55);
 
-  text("PAUSED", 300, 330, 46);
+  text("PAUSED", 300, midY(330), 46);
 
   button(PAUSE_RESUME_BTN);
-  text("PLAY", 300, 441, 26);
+  text("PLAY", 300, midY(441), 26);
 
   button(PAUSE_MENU_BTN);
-  text("MAIN MENU", 300, 531, 26);
+  text("MAIN MENU", 300, midY(531), 26);
 
-  plainText("Esc or Enter to resume", 300, 600, 15, "#c3c8dc");
+  plainText("Esc or Enter to resume", 300, midY(600), 15, "#c3c8dc");
 }
 
 function drawGameOver() {
   blurBackdrop(8);
   dim(0.55);
 
-  text("GAME OVER", 300, 420, 46);
-  text("SCORE: " + score, 300, 480, 30);
-  text("Press R or click to return", 300, 540, 20);
+  text("GAME OVER", 300, midY(420), 46);
+  text("SCORE: " + score, 300, midY(480), 30);
+  text("Press R or click to return", 300, midY(540), 20);
 }
 
 function drawHearts(x, y, hp, maxHp) {

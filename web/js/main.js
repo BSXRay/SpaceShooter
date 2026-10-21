@@ -29,6 +29,27 @@ function frame(time) {
   requestAnimationFrame(frame);
 }
 
+resizeGame();
 reset();
 applyVolume();
 requestAnimationFrame(frame);
+
+// Keep the world in sync with the display size (rotation, window
+// resize, browser chrome showing or hiding on mobile).
+let resizeTimer = null;
+
+function scheduleResize() {
+  if (resizeTimer) return;
+
+  resizeTimer = setTimeout(() => {
+    resizeTimer = null;
+    resizeGame();
+  }, 100);
+}
+
+window.addEventListener("resize", scheduleResize);
+window.addEventListener("orientationchange", scheduleResize);
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", scheduleResize);
+}
