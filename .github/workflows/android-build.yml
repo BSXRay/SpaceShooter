@@ -42,6 +42,16 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # Do not request the legacy "tools" package (it no longer exists
+          # in the SDK repository and makes sdkmanager fail).
+          packages: "platform-tools"
+
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses > /dev/null 2>&1 || true
+
+      - name: Install required SDK platforms/build-tools
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
       - name: Install dependencies
         run: npm ci
