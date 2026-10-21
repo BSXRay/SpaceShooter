@@ -317,7 +317,11 @@
     if (nl <= 0) throw new Error("malformed manifest (no signature)");
 
     const signatureB64 = raw.slice(0, nl).trim();
-    const payloadText = raw.slice(nl + 1);
+    // The signed payload is the exact manifest JSON without trailing
+    // whitespace. The released file ends with a newline, so it has to be
+    // stripped before verifying - otherwise the signature check fails on a
+    // perfectly good release.
+    const payloadText = raw.slice(nl + 1).trimEnd();
     const payloadBytes = new TextEncoder().encode(payloadText);
 
     const ok = await verifySignature(payloadBytes, signatureB64);

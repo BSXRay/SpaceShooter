@@ -179,11 +179,14 @@ export function runLoaderTests(report) {
           return { ok: true, json: async () => ({ version: "1.0.0" }) };
         }
         if (url === "https://example.test/manifest") {
+          // Must match the released format exactly: make-bundle.mjs writes
+          // "<signature>\n<payload>\n" (with a trailing newline) while the
+          // signature covers the payload without it.
           const body = opts.unsigned
-            ? "not-a-signature\n" + payload
+            ? "not-a-signature\n" + payload + "\n"
             : opts.tamperedManifest
-              ? sig + "\n" + payload.replace("1.2.0", "9.9.9")
-              : sig + "\n" + payload;
+              ? sig + "\n" + payload.replace("1.2.0", "9.9.9") + "\n"
+              : sig + "\n" + payload + "\n";
           return { ok: true, status: 200, text: async () => body };
         }
         return { ok: true, status: 200, text: async () => "" };
