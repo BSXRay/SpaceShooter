@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.WindowManager;
 import android.webkit.WebView;
 
-import androidx.activity.EdgeToEdge;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
@@ -21,20 +20,21 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        // Handles the Android 15+ enforced edge-to-edge correctly and makes the
-        // system bars fully transparent (no default translucent scrim strip).
-        EdgeToEdge.enable(this);
+        // MUST be the first call: installs the native splash screen and applies
+        // the "postSplashScreenTheme" (the real app theme). Without this the
+        // launch theme stays active for the whole app lifetime.
+        androidx.core.splashscreen.SplashScreen.installSplashScreen(this);
 
-        // Must be set BEFORE super.onCreate(), which inflates the WebView and
-        // can otherwise reserve space for the system bars (grey top strip).
+        // Draw behind the system bars so the game canvas can fill the screen.
+        // Must be set BEFORE super.onCreate(), which inflates the WebView.
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         getWindow().setBackgroundDrawable(new ColorDrawable(GAME_BACKGROUND));
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         super.onCreate(savedInstanceState);
 
-        // Keep the content edge-to-edge: ignore any inset padding Capacitor may
-        // have applied to the WebView so the game draws under the status bar.
+        // Ignore any inset padding on the content view so the game is not
+        // pushed down by the (hidden) system bars.
         View content = findViewById(android.R.id.content);
         if (content != null) {
             content.setOnApplyWindowInsetsListener((v, insets) -> {

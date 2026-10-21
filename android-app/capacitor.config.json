@@ -13,9 +13,12 @@
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 0,
-      "launchAutoHide": false,
+      "launchAutoHide": true,
       "backgroundColor": "#090b16",
-      "showSpinner": false
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
     },
     "CapacitorUpdater": {
       "autoUpdate": false

@@ -9,26 +9,42 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <!--
+        The game runs edge-to-edge behind the (hidden) system bars.
+
+        - windowBackground matches the game colour so nothing flashes grey.
+        - windowLayoutInDisplayCutoutMode=shortEdges makes the app draw into
+          the display cutout / status bar area instead of leaving a strip.
+        - The contrast scrims are disabled so no translucent grey bar is
+          drawn over the game.
+    -->
     <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <!-- Match the game background so the edge-to-edge system-bar areas are
-             dark instead of the default grey window background. -->
         <item name="android:windowBackground">@color/gameBackground</item>
-        <item name="android:background">@color/gameBackground</item>
+        <item name="android:colorBackground">@color/gameBackground</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <!-- No light icons / no translucent contrast scrim over the game. -->
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
         <item name="android:enforceStatusBarContrast">false</item>
         <item name="android:enforceNavigationBarContrast">false</item>
     </style>
 
+    <!--
+        Launch theme for the (short) native splash screen.
 
+        IMPORTANT: do NOT use the splash drawable as android:background here.
+        The 2732x2732 splash.png gets stretched across the whole window and
+        shows up as a distorted banner. A plain colour is used instead.
+
+        postSplashScreenTheme is applied by SplashScreen.installSplashScreen(),
+        which MainActivity calls before super.onCreate().
+    -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@drawable/splash</item>
+        <item name="android:background">@color/gameBackground</item>
         <item name="windowSplashScreenBackground">@color/gameBackground</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
