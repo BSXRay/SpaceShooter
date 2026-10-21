@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.webkit.WebView;
 
+import androidx.activity.EdgeToEdge;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
@@ -20,6 +21,10 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // Handles the Android 15+ enforced edge-to-edge correctly and makes the
+        // system bars fully transparent (no default translucent scrim strip).
+        EdgeToEdge.enable(this);
+
         // Must be set BEFORE super.onCreate(), which inflates the WebView and
         // can otherwise reserve space for the system bars (grey top strip).
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
