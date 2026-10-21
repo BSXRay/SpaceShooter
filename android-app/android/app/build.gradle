@@ -24,6 +24,45 @@ try {
     // Keep default versionCode.
 }
 
+// --------------------------------------------------
+// RELEASE SIGNING
+// --------------------------------------------------
+// The release keystore is never committed. CI passes it through the
+// environment (see .github/workflows/release-bundle.yml). For local
+// release builds create `android-app/keystore.properties`:
+//
+//   storeFile=/absolute/path/to/spaceshooter-release.keystore
+//   storePassword=...
+//   keyAlias=spaceshooter
+//   keyPassword=...
+//
+// Without signing material the release build stays unsigned, which is
+// only useful for local smoke tests.
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = file("../../keystore.properties")
+
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+def signingStoreFile = System.getenv("ANDROID_KEYSTORE_PATH") ?:
+        keystoreProperties.getProperty("storeFile")
+def signingStorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD") ?:
+        keystoreProperties.getProperty("storePassword")
+def signingKeyAlias = System.getenv("ANDROID_KEY_ALIAS") ?:
+        keystoreProperties.getProperty("keyAlias")
+def signingKeyPassword = System.getenv("ANDROID_KEY_PASSWORD") ?:
+        keystoreProperties.getProperty("keyPassword")
+
+def releaseSigningReady = signingStoreFile && signingStorePassword &&
+        signingKeyAlias && signingKeyPassword &&
+        file(signingStoreFile).exists()
+
+if (!releaseSigningReady) {
+    logger.warn("No release signing material found - the release APK will be UNSIGNED")
+}
+
 android {
     namespace = "io.github.bsxray.spaceshooter"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -40,8 +79,25 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (releaseSigningReady) {
+            release {
+                storeFile file(signingStoreFile)
+                storePassword signingStorePassword
+                keyAlias signingKeyAlias
+                keyPassword signingKeyPassword
+                // v1 + v2 signing: v2 is required for Android 7+, v1 keeps
+                // the APK installable on Android 6 and older.
+                enableV1Signing true
+                enableV2Signing true
+            }
+        }
+    }
     buildTypes {
         release {
+            if (releaseSigningReady) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

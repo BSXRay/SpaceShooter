@@ -92,3 +92,55 @@ jobs:
           name: spaceshooter-debug-apk
           path: ${{ steps.apk.outputs.path }}
           if-no-files-found: error
+
+      # ---------------------------------------------------------------
+      # Signed release APK (the one that gets distributed)
+      # ---------------------------------------------------------------
+
+      - name: Decode release keystore
+        id: keystore
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "::warning::ANDROID_KEYSTORE_BASE64 is not set - skipping the signed release APK"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          mkdir -p "$RUNNER_TEMP/keystore"
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/keystore/release.keystore"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/keystore/release.keystore" >> "$GITHUB_ENV"
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Assemble release APK
+        if: steps.keystore.outputs.ready == 'true'
+        run: cd android && ./gradlew assembleRelease --no-daemon
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Verify release APK signature
+        id: releaseapk
+        if: steps.keystore.outputs.ready == 'true'
+        shell: bash
+        run: |
+          APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n1)
+          if [ -z "$APK" ]; then
+            echo "::error::No release APK produced"
+            exit 1
+          fi
+          APKSIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | tail -n1)
+          # Fails the job if the APK is unsigned or the signature is broken.
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
+          echo "path=$PWD/$APK" >> "$GITHUB_OUTPUT"
+          ls -la "$APK"
+
+      - name: Upload release APK artifact
+        if: steps.keystore.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: spaceshooter-release-apk
+          path: ${{ steps.releaseapk.outputs.path }}
+          if-no-files-found: error

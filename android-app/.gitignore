@@ -27,6 +27,9 @@ android/capacitor-cordova-android-plugins/
 *.jks
 *.keystore
 signing/
+keystore/
+# Local release signing properties (paths + passwords)
+keystore.properties
 
 # Editor
 .vscode/
