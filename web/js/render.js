@@ -354,6 +354,9 @@ function drawHUD() {
     ctx.textAlign = "center";
     ctx.fillText("AUTO", 300, 40);
   }
+
+  // Which difficulty the current round runs on.
+  plainText("DIFFICULTY: " + difficulty.name, 300, 58, 13, "#54ffc5");
 }
 
 function drawPauseButton() {
