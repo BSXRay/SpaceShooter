@@ -52,7 +52,31 @@ copyDir(srcSounds, path.join(outDir, "sounds"));
 // 3. Loader assets (Android-only, kept out of the website).
 copyDir(loaderDir, path.join(outDir, "loader"));
 
-// 4. Inject the loader into the copied index.html.
+// 4. Capacitor plugin glue (Android-only). Capacitor 3+ does not expose
+//    plugins as window globals and does not register plugin JS by itself:
+//    loading the @capacitor/core UMD build plus the updater plugin's UMD
+//    build registers CapacitorUpdater in Capacitor.Plugins, which is what
+//    loader.js talks to.
+const vendorDir = path.join(outDir, "loader", "vendor");
+fs.mkdirSync(vendorDir, { recursive: true });
+
+const vendorScripts = [
+  [
+    path.join(appRoot, "node_modules", "@capacitor", "core", "dist", "capacitor.js"),
+    "capacitor.js"
+  ],
+  [
+    path.join(appRoot, "node_modules", "@capgo", "capacitor-updater", "dist", "plugin.js"),
+    "capacitor-updater.js"
+  ]
+];
+
+for (const [from, name] of vendorScripts) {
+  if (!fs.existsSync(from)) fail("missing capacitor vendor script: " + from);
+  fs.copyFileSync(from, path.join(vendorDir, name));
+}
+
+// 5. Inject the loader into the copied index.html.
 const indexPath = path.join(outDir, "index.html");
 let html = fs.readFileSync(indexPath, "utf8");
 
@@ -77,6 +101,8 @@ const overlay = `
 </div>`;
 
 const loaderScripts = `
+<script src="loader/vendor/capacitor.js"></script>
+<script src="loader/vendor/capacitor-updater.js"></script>
 <script src="loader/update-logic.js"></script>
 <script src="loader/updater-config.js"></script>
 <script src="loader/loader.js"></script>`;
@@ -95,7 +121,7 @@ html = html.replace("</body>", loaderScripts + "\n</body>");
 
 fs.writeFileSync(indexPath, html);
 
-// 5. Version metadata. The version is the single source of truth used by
+// 6. Version metadata. The version is the single source of truth used by
 //    both the loader UI and the update checker.
 const pkg = JSON.parse(
   fs.readFileSync(path.join(appRoot, "package.json"), "utf8")

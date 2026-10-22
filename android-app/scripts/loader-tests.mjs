@@ -154,10 +154,11 @@ export function runLoaderTests(report) {
       },
       window: {
         SS_UPDATER_CONFIG: undefined,
-        Capacitor: opts.nativeHttp
-          ? { Plugins: { CapacitorHttp: { get: (o) => opts.nativeHttp(o) } } }
-          : undefined,
-        CapacitorUpdater: opts.noUpdater ? undefined : updater,
+        Capacitor: makeCapacitor(opts, updater),
+        CapacitorUpdater:
+          opts.noUpdater || opts.capacitorPlugin || opts.nativePromiseShim
+            ? undefined
+            : updater,
         addEventListener: () => {},
         matchMedia: () => ({ matches: false })
       },
@@ -223,6 +224,33 @@ export function runLoaderTests(report) {
     }
 
     return { calls };
+  }
+
+  // Mirrors the Capacitor runtime: plugins are only reachable through
+  // Capacitor.Plugins (registered by the plugin's JS), never as globals.
+  function makeCapacitor(opts, updater) {
+    if (!opts.nativeHttp && !opts.capacitorPlugin && !opts.nativePromiseShim) {
+      return undefined;
+    }
+
+    const cap = { Plugins: {} };
+
+    if (opts.nativeHttp) {
+      cap.Plugins.CapacitorHttp = { get: (o) => opts.nativeHttp(o) };
+    }
+    if (opts.capacitorPlugin) {
+      cap.Plugins.CapacitorUpdater = opts.noUpdater ? undefined : updater;
+    }
+    if (opts.nativePromiseShim) {
+      cap.nativePromise = (plugin, method, options) => {
+        if (plugin !== "CapacitorUpdater") {
+          throw new Error("unexpected plugin: " + plugin);
+        }
+        return updater[method](options || {});
+      };
+    }
+
+    return cap;
   }
 
   async function tests() {
@@ -323,9 +351,34 @@ export function runLoaderTests(report) {
       assert(calls.notify === 1, "must still boot built-in");
     });
 
+    await report(
+      "loader: updater is resolved from Capacitor.Plugins (real app layout)",
+      async () => {
+        const { calls } = await runScenario("capacitor-plugins", {
+          capacitorPlugin: true
+        });
+        assert(calls.download === 1, "must download via Capacitor.Plugins");
+        assert(calls.set === 1, "must activate with set()");
+        assert(calls.notify === 0, "must not fall back to the built-in bundle");
+      }
+    );
+
+    await report(
+      "loader: updater is reached through Capacitor.nativePromise as fallback",
+      async () => {
+        const { calls } = await runScenario("native-promise", {
+          nativePromiseShim: true
+        });
+        assert(calls.download === 1, "must download via nativePromise");
+        assert(calls.set === 1, "must activate with set()");
+        assert(calls.notify === 0, "must not fall back to the built-in bundle");
+      }
+    );
+
     await report("loader: missing updater plugin boots built-in", async () => {
       const { calls } = await runScenario("no-updater", { noUpdater: true });
       assert(calls.notify === 0, "no plugin means no notify");
+      assert(calls.download === 0, "must not download without a plugin");
     });
   }
 

@@ -76,6 +76,15 @@ android-app/
 8. `notifyAppReady()` confirms the new bundle loaded; if it did not, the
    updater **rolls back** to the last working version automatically.
 
+The updater plugin itself is reached through `Capacitor.Plugins.CapacitorUpdater`.
+Capacitor 3+ exposes no plugin globals, and the native bridge does not register
+plugin JS on its own, so `build-web.mjs` copies two UMD builds into
+`www/loader/vendor/` (`@capacitor/core/dist/capacitor.js` and
+`@capgo/capacitor-updater/dist/plugin.js`) and loads them before `loader.js`.
+That registration step is what makes `current()`, `download()` and `set()`
+actually reach the native plugin; without it the loader reports
+"Updater unavailable — starting installed version."
+
 ---
 
 ## 2. Prerequisites

@@ -134,6 +134,45 @@
     };
   }
 
+  // Resolves the @capgo/capacitor-updater plugin. In the app it is registered
+  // by loader/vendor/capacitor-updater.js (Capacitor.Plugins.CapacitorUpdater);
+  // there is no global window.CapacitorUpdater in Capacitor 3+. The last
+  // resort talks to the native bridge directly, so OTA keeps working even if
+  // the vendor scripts failed to load.
+  function updaterPlugin() {
+    try {
+      const cap = window.Capacitor;
+      const registered = cap && cap.Plugins && cap.Plugins.CapacitorUpdater;
+      if (registered) return registered;
+    } catch (e) {
+      /* ignore */
+    }
+
+    if (window.CapacitorUpdater) return window.CapacitorUpdater;
+
+    try {
+      const cap = window.Capacitor;
+      if (cap && typeof cap.nativePromise === "function") {
+        const call = (method) => (options) =>
+          cap.nativePromise("CapacitorUpdater", method, options || {});
+        return {
+          current: call("current"),
+          download: call("download"),
+          delete: call("delete"),
+          set: call("set"),
+          next: call("next"),
+          reset: call("reset"),
+          notifyAppReady: call("notifyAppReady"),
+          getFailedUpdate: call("getFailedUpdate")
+        };
+      }
+    } catch (e) {
+      /* ignore */
+    }
+
+    return null;
+  }
+
   function base64ToBytes(b64) {
     const bin = atob(b64);
     const out = new Uint8Array(bin.length);
@@ -221,10 +260,13 @@
   async function readCurrentVersion() {
     // Prefer the version reported by the updater (active bundle).
     try {
-      const cur = await window.CapacitorUpdater.current();
-      if (cur && cur.bundle && cur.bundle.version &&
-          cur.bundle.version !== "builtin") {
-        return cur.bundle.version;
+      const Updater = updaterPlugin();
+      if (Updater) {
+        const cur = await Updater.current();
+        if (cur && cur.bundle && cur.bundle.version &&
+            cur.bundle.version !== "builtin") {
+          return cur.bundle.version;
+        }
       }
     } catch (e) {
       /* plugin not available (web) */
@@ -431,7 +473,7 @@
     setStatus("Downloading update…");
     setProgress(0.55);
 
-    const Updater = window.CapacitorUpdater;
+    const Updater = updaterPlugin();
     if (!Updater) {
       // No native updater (e.g. running in a plain browser): just boot.
       setState("Updater unavailable — starting installed version.");
@@ -498,8 +540,9 @@
     // Tell the updater the current bundle loaded fine, otherwise it will
     // roll back. This must run in both the built-in and updated bundle.
     try {
-      if (window.CapacitorUpdater) {
-        await window.CapacitorUpdater.notifyAppReady();
+      const Updater = updaterPlugin();
+      if (Updater) {
+        await Updater.notifyAppReady();
       }
     } catch (e) {
       /* ignore */
@@ -528,10 +571,11 @@
     // If the updater plugin itself reports a failed bundle, reset to a known
     // good version before continuing.
     try {
-      if (window.CapacitorUpdater) {
-        const failed = await window.CapacitorUpdater.getFailedUpdate();
+      const Updater = updaterPlugin();
+      if (Updater) {
+        const failed = await Updater.getFailedUpdate();
         if (failed) {
-          await window.CapacitorUpdater.reset();
+          await Updater.reset();
         }
       }
     } catch (e) {
