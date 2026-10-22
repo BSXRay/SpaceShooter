@@ -81,6 +81,25 @@ const imageNames = {
 const imgs = {};
 const imageStatus = {};
 
+// Version of the running web bundle, read from version.json (written by
+// build-web.mjs for the app and by the Pages workflow for the website).
+// Shown on the main menu so a pulled OTA update can be verified. Empty when
+// the file is unavailable (e.g. a plain local static server).
+let webVersion = "";
+
+try {
+  if (typeof fetch === "function") {
+    fetch("version.json", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (j && j.version) webVersion = String(j.version);
+      })
+      .catch(() => {});
+  }
+} catch (e) {
+  /* no fetch available */
+}
+
 for (const [key, file] of Object.entries(imageNames)) {
   const img = new Image();
 

@@ -28,6 +28,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -38,6 +40,15 @@ jobs:
           cp -r web/. _site/
           cp -r images _site/images
           cp -r sounds _site/sounds
+
+      - name: Write version.json (latest release tag)
+        run: |
+          V="$(git describe --tags --abbrev=0 2>/dev/null || true)"
+          V="${V#v}"
+          if [ -n "$V" ]; then
+            printf '{\n  "version": "%s"\n}\n' "$V" > _site/version.json
+            echo "site version: $V"
+          fi
 
       - name: Upload _site/ as Pages artifact
         uses: actions/upload-pages-artifact@v3

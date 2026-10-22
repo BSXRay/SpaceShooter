@@ -269,6 +269,11 @@ function drawMenu() {
       300, midY(690), 14, "#ffe4a6"
     );
   }
+
+  // Running web bundle version (bottom edge, for verifying pulled updates).
+  if (webVersion) {
+    plainText("v" + webVersion, 300, H - 16 * uiScale, 12, "#6b7186");
+  }
 }
 
 // --------------------------------------------------
