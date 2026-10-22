@@ -32,6 +32,14 @@ function frame(time) {
 resizeGame();
 reset();
 applyVolume();
+
+// Warm up both pixel-font faces so the first menu frame is not drawn with
+// the monospace fallback.
+if (document.fonts && document.fonts.load) {
+  document.fonts.load("24px Silkscreen").catch(() => {});
+  document.fonts.load("bold 24px Silkscreen").catch(() => {});
+}
+
 requestAnimationFrame(frame);
 
 // Keep the world in sync with the display size (rotation, window

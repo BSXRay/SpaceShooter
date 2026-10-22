@@ -131,16 +131,24 @@ function easeInOut(t) {
     : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
+// Free pixel font: Silkscreen by Jason Kottke (SIL OFL 1.1). The monospace
+// fallback keeps the canvas readable until the webfont has loaded.
+const UI_FONT = "Silkscreen, monospace";
+
+function fontPx(size) {
+  return Math.max(6, Math.round(size * uiScale));
+}
+
 function text(str, x, y, size = 24, align = "center") {
   ctx.fillStyle = "white";
-  ctx.font = "bold " + size * uiScale + "px Arial";
+  ctx.font = "bold " + fontPx(size) + "px " + UI_FONT;
   ctx.textAlign = align;
   ctx.fillText(str, x, y);
 }
 
 function plainText(str, x, y, size = 16, color = "#d0d4e5") {
   ctx.fillStyle = color;
-  ctx.font = size * uiScale + "px Arial";
+  ctx.font = fontPx(size) + "px " + UI_FONT;
   ctx.textAlign = "center";
   ctx.fillText(str, x, y);
 }
@@ -155,14 +163,35 @@ function roundRect(x, y, w, h, r) {
   ctx.closePath();
 }
 
+// Pixel-art panel: a rectangle whose corners are cut as a single square
+// step, so every edge stays aligned to the pixel grid.
+function pixelRect(x, y, w, h, cut = 10) {
+  const c = Math.max(0, Math.min(cut, w / 2, h / 2));
+
+  ctx.beginPath();
+  ctx.moveTo(x + c, y);
+  ctx.lineTo(x + w - c, y);
+  ctx.lineTo(x + w - c, y + c);
+  ctx.lineTo(x + w, y + c);
+  ctx.lineTo(x + w, y + h - c);
+  ctx.lineTo(x + w - c, y + h - c);
+  ctx.lineTo(x + w - c, y + h);
+  ctx.lineTo(x + c, y + h);
+  ctx.lineTo(x + c, y + h - c);
+  ctx.lineTo(x, y + h - c);
+  ctx.lineTo(x, y + c);
+  ctx.lineTo(x + c, y + c);
+  ctx.closePath();
+}
+
 function button(r, active) {
   const accent = active ? "#54ffc5" : "#7fb2ff";
-  const radius = 14;
+  const cut = Math.max(6, Math.min(12, Math.round(r.h * 0.18)));
 
-  // Outer glow
-  ctx.save();
-  ctx.shadowColor = accent;
-  ctx.shadowBlur = active ? 26 : 14;
+  // Hard drop shadow, no blur: pixel art does not glow softly.
+  ctx.fillStyle = "rgba(3,5,12,.6)";
+  pixelRect(r.x + 3, r.y + 7, r.w, r.h, cut);
+  ctx.fill();
 
   const grad = ctx.createLinearGradient(
     r.x, r.y, r.x, r.y + r.h
@@ -177,25 +206,27 @@ function button(r, active) {
   }
 
   ctx.fillStyle = grad;
-  roundRect(r.x, r.y, r.w, r.h, radius);
+  pixelRect(r.x, r.y, r.w, r.h, cut);
   ctx.fill();
-  ctx.restore();
 
-  // Top highlight
-  const shine = ctx.createLinearGradient(
-    r.x, r.y, r.x, r.y + r.h * 0.5
+  // Blocky highlight band instead of a soft gradient shine.
+  ctx.fillStyle = "rgba(255,255,255,.14)";
+  pixelRect(
+    r.x + 5, r.y + 5,
+    r.w - 10, Math.round(r.h * 0.32),
+    Math.max(3, cut - 4)
   );
-  shine.addColorStop(0, "rgba(255,255,255,.18)");
-  shine.addColorStop(1, "rgba(255,255,255,0)");
-
-  ctx.fillStyle = shine;
-  roundRect(r.x + 2, r.y + 2, r.w - 4, r.h * 0.5, radius - 2);
   ctx.fill();
 
-  // Border
+  // Chunky outline plus a dark inner line for the bevel.
   ctx.strokeStyle = accent;
+  ctx.lineWidth = 3;
+  pixelRect(r.x, r.y, r.w, r.h, cut);
+  ctx.stroke();
+
+  ctx.strokeStyle = "rgba(6,9,20,.55)";
   ctx.lineWidth = 2;
-  roundRect(r.x, r.y, r.w, r.h, radius);
+  pixelRect(r.x + 4, r.y + 4, r.w - 8, r.h - 8, Math.max(2, cut - 4));
   ctx.stroke();
 }
 
@@ -217,9 +248,11 @@ function githubButton(r) {
   const cy = r.y + r.h / 2;
   const radius = r.w / 2;
 
-  ctx.save();
-  ctx.shadowColor = "#7fb2ff";
-  ctx.shadowBlur = 14;
+  // Hard shadow, matching the rectangular buttons.
+  ctx.fillStyle = "rgba(3,5,12,.6)";
+  ctx.beginPath();
+  ctx.arc(cx + 3, cy + 7, radius, 0, Math.PI * 2);
+  ctx.fill();
 
   const grad = ctx.createLinearGradient(r.x, r.y, r.x, r.y + r.h);
   grad.addColorStop(0, "#2b3450");
@@ -229,10 +262,9 @@ function githubButton(r) {
   ctx.beginPath();
   ctx.arc(cx, cy, radius, 0, Math.PI * 2);
   ctx.fill();
-  ctx.restore();
 
   ctx.strokeStyle = "#7fb2ff";
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.arc(cx, cy, radius, 0, Math.PI * 2);
   ctx.stroke();
@@ -323,7 +355,7 @@ function drawMenu() {
     "GET THE ANDROID APP",
     L.getApp.x + L.getApp.w / 2,
     L.getApp.y + L.getApp.h / 2 + 6,
-    18
+    16
   );
 
   // Link to the source repository.
@@ -351,13 +383,15 @@ function slider(p, label, value) {
   text(label, 300, p.y - 40 * uiScale, 22);
 
   // Track
+  const cut = Math.round(p.h / 2);
+
   ctx.fillStyle = "rgba(10,14,28,.85)";
-  roundRect(p.x, p.y, p.w, p.h, p.h / 2);
+  pixelRect(p.x, p.y, p.w, p.h, cut);
   ctx.fill();
 
   ctx.strokeStyle = "#3b4666";
   ctx.lineWidth = 2;
-  roundRect(p.x, p.y, p.w, p.h, p.h / 2);
+  pixelRect(p.x, p.y, p.w, p.h, cut);
   ctx.stroke();
 
   // Filled part
@@ -368,25 +402,24 @@ function slider(p, label, value) {
   grad.addColorStop(1, "#54ffc5");
 
   ctx.fillStyle = grad;
-  roundRect(p.x, p.y, w, p.h, p.h / 2);
+  pixelRect(p.x, p.y, w, p.h, cut);
   ctx.fill();
 
-  // Knob
+  // Knob: a square with stepped corners instead of a glowing circle.
   const kx = p.x + p.w * value;
+  const ky = p.y + p.h / 2;
 
-  ctx.save();
-  ctx.shadowColor = "#7fe6ff";
-  ctx.shadowBlur = 16;
-  ctx.fillStyle = "#eaf6ff";
-  ctx.beginPath();
-  ctx.arc(kx, p.y + p.h / 2, 15, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(3,5,12,.5)";
+  pixelRect(kx - 13, ky - 11, 30, 30, 7);
   ctx.fill();
-  ctx.restore();
+
+  ctx.fillStyle = "#eaf6ff";
+  pixelRect(kx - 15, ky - 15, 30, 30, 7);
+  ctx.fill();
 
   ctx.strokeStyle = "#7fb2ff";
   ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(kx, p.y + p.h / 2, 15, 0, Math.PI * 2);
+  pixelRect(kx - 15, ky - 15, 30, 30, 7);
   ctx.stroke();
 
   // Value
@@ -421,7 +454,7 @@ function drawHUD() {
 
   if (autoShoot) {
     ctx.fillStyle = "#54ffc5";
-    ctx.font = "bold 14px Arial";
+    ctx.font = "bold " + fontPx(14) + "px " + UI_FONT;
     ctx.textAlign = "center";
     ctx.fillText("AUTO", 300, 84);
   }
@@ -432,11 +465,10 @@ function drawHUD() {
 
 function drawPauseButton() {
   const b = PAUSE_BTN;
-  const radius = 10;
 
-  ctx.save();
-  ctx.shadowColor = "#7fb2ff";
-  ctx.shadowBlur = 12;
+  ctx.fillStyle = "rgba(3,5,12,.5)";
+  pixelRect(b.x + 2, b.y + 5, b.w, b.h, 8);
+  ctx.fill();
 
   const grad = ctx.createLinearGradient(
     b.x, b.y, b.x, b.y + b.h
@@ -445,13 +477,12 @@ function drawPauseButton() {
   grad.addColorStop(1, "rgba(16,23,44,.92)");
 
   ctx.fillStyle = grad;
-  roundRect(b.x, b.y, b.w, b.h, radius);
+  pixelRect(b.x, b.y, b.w, b.h, 8);
   ctx.fill();
-  ctx.restore();
 
   ctx.strokeStyle = "#a6caff";
-  ctx.lineWidth = 2;
-  roundRect(b.x, b.y, b.w, b.h, radius);
+  ctx.lineWidth = 3;
+  pixelRect(b.x, b.y, b.w, b.h, 8);
   ctx.stroke();
 
   ctx.fillStyle = "#ffffff";
@@ -575,7 +606,7 @@ function drawOwnedPowerups() {
 
     // Remaining seconds, centered under the icon.
     ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 11px Arial";
+    ctx.font = "bold " + fontPx(11) + "px " + UI_FONT;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(Math.ceil(p.remaining / 1000), x, y + r + 9);
@@ -655,7 +686,7 @@ function drawAward() {
   ctx.save();
   ctx.globalAlpha = badgeAlpha;
   ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 17px Arial";
+  ctx.font = "bold " + fontPx(17) + "px " + UI_FONT;
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.fillText(p.name, W / 2 - 44, AWARD.BADGE_Y + 1);
