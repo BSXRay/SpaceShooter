@@ -139,8 +139,42 @@ const MENU_LAYOUT = {
   hard: { x: 120, y: 362, w: 360, h: 62 },
   insane: { x: 120, y: 438, w: 360, h: 62 },
   auto: { x: 120, y: 536, w: 360, h: 56 },
-  settings: { x: 120, y: 606, w: 360, h: 56 }
+  settings: { x: 120, y: 606, w: 360, h: 56 },
+  getApp: { x: 120, y: 678, w: 296, h: 50 },
+  github: { x: 430, y: 678, w: 50, h: 50 }
 };
+
+const REPO_URL = "https://github.com/BSXRay/SpaceShooter";
+const RELEASES_URL = "https://github.com/BSXRay/SpaceShooter/releases/latest";
+
+// Opens a link outside the game. In the Android app the bridge sends
+// external navigations to the system browser, so the game keeps running;
+// in a browser we open a new tab.
+function openExternal(url) {
+  try {
+    const cap = window.Capacitor;
+    const native = cap && typeof cap.isNativePlatform === "function" &&
+      cap.isNativePlatform();
+
+    if (native) {
+      window.location.href = url;
+      return;
+    }
+
+    if (typeof window.open === "function") {
+      window.open(url, "_blank", "noopener");
+      return;
+    }
+  } catch (e) {
+    /* fall through */
+  }
+
+  try {
+    window.location.href = url;
+  } catch (e) {
+    /* nowhere to navigate to (tests) */
+  }
+}
 
 const DIFFICULTY_LAYOUT = [
   MENU_LAYOUT.easy,
@@ -174,9 +208,15 @@ function layoutUI() {
   L.insane.y = midY(438);
   L.auto.y = midY(536);
   L.settings.y = midY(606);
+  L.getApp.y = midY(678);
 
   L.easy.h = L.normal.h = L.hard.h = L.insane.h = 62 * uiScale;
   L.auto.h = L.settings.h = 56 * uiScale;
+  L.getApp.h = 50 * uiScale;
+
+  L.github.w = L.github.h = 50 * uiScale;
+  L.github.x = 480 - L.github.w;
+  L.github.y = L.getApp.y + (L.getApp.h - L.github.h) / 2;
 
   PAUSE_RESUME_BTN.y = midY(370);
   PAUSE_SETTINGS_BTN.y = midY(455);
@@ -207,6 +247,15 @@ function inRect(p, r) {
     p.x >= r.x && p.x <= r.x + r.w &&
     p.y >= r.y && p.y <= r.y + r.h
   );
+}
+
+function inCircle(p, r) {
+  const cx = r.x + r.w / 2;
+  const cy = r.y + r.h / 2;
+  const dx = p.x - cx;
+  const dy = p.y - cy;
+
+  return dx * dx + dy * dy <= (r.w / 2) * (r.w / 2);
 }
 
 // Returns the horizontal value (0..1) for a slider given a point.

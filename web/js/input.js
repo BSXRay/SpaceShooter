@@ -162,6 +162,17 @@ canvas.addEventListener("pointerdown", e => {
 
     const L = MENU_LAYOUT;
 
+    // Links to the repository and the release downloads.
+    if (inCircle(p, L.github)) {
+      openExternal(REPO_URL);
+      return;
+    }
+
+    if (inRect(p, L.getApp)) {
+      openExternal(RELEASES_URL);
+      return;
+    }
+
     // Auto-shoot button
     if (inRect(p, L.auto)) {
       autoShoot = !autoShoot;
