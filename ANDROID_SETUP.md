@@ -57,6 +57,11 @@ android-app/
    works fully offline immediately.
 2. The loader shows a boot screen (version, status, progress bar, errors).
 3. It queries the GitHub Releases API for **stable, published** releases only.
+   The API and the manifest are fetched through Capacitor's **native HTTP
+   stack** (`CapacitorHttp`), not through `fetch()`: GitHub serves release
+   assets from `release-assets.githubusercontent.com`, which sends **no CORS
+   headers**, so a WebView `fetch()` fails with "Failed to fetch". Where the
+   native stack is unavailable (browser), the loader falls back to `fetch()`.
 4. It picks the newest stable semver, compares it with the running version.
 5. For a newer release it downloads:
    - `web-manifest-<version>.txt` — `<base64 Ed25519 signature>\n<json manifest>`

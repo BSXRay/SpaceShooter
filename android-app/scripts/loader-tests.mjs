@@ -154,6 +154,9 @@ export function runLoaderTests(report) {
       },
       window: {
         SS_UPDATER_CONFIG: undefined,
+        Capacitor: opts.nativeHttp
+          ? { Plugins: { CapacitorHttp: { get: (o) => opts.nativeHttp(o) } } }
+          : undefined,
         CapacitorUpdater: opts.noUpdater ? undefined : updater,
         addEventListener: () => {},
         matchMedia: () => ({ matches: false })
@@ -165,14 +168,21 @@ export function runLoaderTests(report) {
       },
       fetch: async (url) => {
         if (opts.offline) throw new Error("network down");
+        // GitHub release assets redirect to a host without CORS headers, so
+        // a WebView fetch() rejects with a TypeError. This simulates it.
+        if (opts.blockGithubFetch && url.startsWith("https://github.com/")) {
+          throw new TypeError("Failed to fetch");
+        }
         if (url.includes("releases")) {
           if (opts.rateLimited) {
             return { ok: false, status: 403, json: async () => [] };
           }
+          const releases = opts.releases || makeReleases();
           return {
             ok: true,
             status: 200,
-            json: async () => opts.releases || makeReleases()
+            json: async () => releases,
+            text: async () => JSON.stringify(releases)
           };
         }
         if (url === "version.json") {
@@ -249,6 +259,37 @@ export function runLoaderTests(report) {
       assert(calls.download === 1, "must download once");
       assert(calls.set === 1, "must activate with set()");
     });
+
+    await report(
+      "loader: native http is used when fetch is blocked by CORS",
+      async () => {
+        const { calls } = await runScenario("native-http", {
+          blockGithubFetch: true,
+          nativeHttp: async ({ url }) => {
+            if (url.includes("/releases")) {
+              return {
+                status: 200,
+                data: JSON.stringify(makeReleases()),
+                headers: {},
+                url
+              };
+            }
+            if (url === "https://example.test/manifest") {
+              return {
+                status: 200,
+                data: sig + "\n" + payload + "\n",
+                headers: {},
+                url
+              };
+            }
+            return { status: 404, data: "", headers: {}, url };
+          }
+        });
+        assert(calls.download === 1, "must download through the native stack");
+        assert(calls.set === 1, "must activate with set()");
+        assert(calls.notify === 0, "must not fall back to the built-in bundle");
+      }
+    );
 
     await report("loader: unsigned manifest is rejected (no activation)", async () => {
       const { calls } = await runScenario("unsigned", { unsigned: true });

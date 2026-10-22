@@ -94,6 +94,46 @@
     }
   }
 
+  // GitHub serves release assets from release-assets.githubusercontent.com,
+  // which sends no CORS headers. A plain fetch() inside the WebView therefore
+  // fails with "Failed to fetch". Capacitor's native HTTP stack is not bound
+  // by CORS, so prefer it and fall back to fetch() where it is unavailable
+  // (browser/website, tests).
+  function nativeHttp() {
+    try {
+      const cap = window.Capacitor;
+      const http = cap && cap.Plugins && cap.Plugins.CapacitorHttp;
+      return http && typeof http.get === "function" ? http : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function httpGetText(url, ms) {
+    const http = nativeHttp();
+    if (http) {
+      try {
+        const r = await http.get({
+          url: url,
+          responseType: "text",
+          connectTimeout: ms || 15000,
+          readTimeout: ms || 15000
+        });
+        const text = typeof r.data === "string" ? r.data : JSON.stringify(r.data);
+        return { ok: r.status >= 200 && r.status < 300, status: r.status, text: text };
+      } catch (e) {
+        /* fall back to fetch() */
+      }
+    }
+
+    const res = await fetchWithTimeout(url, ms);
+    return {
+      ok: res.ok,
+      status: res.status,
+      text: res.ok ? await res.text() : ""
+    };
+  }
+
   function base64ToBytes(b64) {
     const bin = atob(b64);
     const out = new Uint8Array(bin.length);
@@ -220,7 +260,7 @@
 
       let releases;
       try {
-        const res = await fetchWithTimeout(cfg.releasesApi, L.requestTimeoutMs);
+        const res = await httpGetText(cfg.releasesApi, L.requestTimeoutMs);
 
         if (res.status === 403) {
           // Likely rate-limited. Not fatal.
@@ -235,7 +275,7 @@
           return;
         }
 
-        releases = await res.json();
+        releases = JSON.parse(res.text);
       } catch (netErr) {
         // Offline or timeout: start the built-in version immediately.
         setState("Offline — starting installed version.");
@@ -303,10 +343,10 @@
   async function fetchAndVerifyManifest(asset, expectedVersion) {
     setStatus("Verifying update…");
 
-    const res = await fetchWithTimeout(asset.browser_download_url, L.requestTimeoutMs);
+    const res = await httpGetText(asset.browser_download_url, L.requestTimeoutMs);
     if (!res.ok) throw new Error("manifest download failed: " + res.status);
 
-    const raw = await res.text();
+    const raw = res.text;
 
     if (raw.length > (L.maxManifestBytes || 16384)) {
       throw new Error("manifest too large");
