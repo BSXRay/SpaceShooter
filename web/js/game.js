@@ -150,8 +150,9 @@ const DIFFICULTY_LAYOUT = [
 ];
 
 const PAUSE_BTN = { x: 12, y: 12, w: 52, h: 46 };
-const PAUSE_RESUME_BTN = { x: 150, y: 400, w: 300, h: 65 };
-const PAUSE_MENU_BTN = { x: 150, y: 490, w: 300, h: 65 };
+const PAUSE_RESUME_BTN = { x: 150, y: 370, w: 300, h: 65 };
+const PAUSE_SETTINGS_BTN = { x: 150, y: 455, w: 300, h: 65 };
+const PAUSE_MENU_BTN = { x: 150, y: 540, w: 300, h: 65 };
 
 // Settings screen sliders (canvas space).
 const SETTINGS_BACK_BTN = { x: 150, y: 640, w: 300, h: 60 };
@@ -177,9 +178,10 @@ function layoutUI() {
   L.easy.h = L.normal.h = L.hard.h = L.insane.h = 62 * uiScale;
   L.auto.h = L.settings.h = 56 * uiScale;
 
-  PAUSE_RESUME_BTN.y = midY(400);
-  PAUSE_MENU_BTN.y = midY(490);
-  PAUSE_RESUME_BTN.h = PAUSE_MENU_BTN.h = 65 * uiScale;
+  PAUSE_RESUME_BTN.y = midY(370);
+  PAUSE_SETTINGS_BTN.y = midY(455);
+  PAUSE_MENU_BTN.y = midY(540);
+  PAUSE_RESUME_BTN.h = PAUSE_SETTINGS_BTN.h = PAUSE_MENU_BTN.h = 65 * uiScale;
 
   SETTINGS_BACK_BTN.y = midY(640);
   SETTINGS_BACK_BTN.h = 60 * uiScale;
@@ -193,6 +195,7 @@ function layoutUI() {
 }
 
 let menuSettingsOpen = false;
+let pauseSettingsOpen = false;
 
 const settings = {
   musicVol: 0.4,
@@ -259,6 +262,7 @@ function startGame(id) {
 
   reset();
   mode = "playing";
+  pauseSettingsOpen = false;
 
   if (musicOn) {
     startMusic();
@@ -274,6 +278,7 @@ function pauseGame() {
   if (mode !== "playing") return;
 
   mode = "paused";
+  pauseSettingsOpen = false;
   pausedAt = now;
   pointer = null;
   audio.music.pause();
@@ -283,6 +288,7 @@ function resumeGame() {
   if (mode !== "paused") return;
 
   mode = "playing";
+  pauseSettingsOpen = false;
 
   // Keep time-based animations (award banner) from jumping forward.
   if (award) {
@@ -297,6 +303,7 @@ function resumeGame() {
 function toMainMenu() {
   mode = "menu";
   pointer = null;
+  pauseSettingsOpen = false;
   audio.music.pause();
 }
 

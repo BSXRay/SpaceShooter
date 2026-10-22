@@ -357,11 +357,11 @@ function drawHUD() {
     ctx.fillStyle = "#54ffc5";
     ctx.font = "bold 14px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("AUTO", 300, 40);
+    ctx.fillText("AUTO", 300, 84);
   }
 
   // Which difficulty the current round runs on.
-  plainText("DIFFICULTY: " + difficulty.name, 300, 58, 13, "#54ffc5");
+  plainText("DIFFICULTY: " + difficulty.name, 300, 104, 13, "#54ffc5");
 }
 
 function drawPauseButton() {
@@ -397,15 +397,23 @@ function drawPauseOverlay() {
   blurBackdrop(8);
   dim(0.55);
 
-  text("PAUSED", 300, midY(330), 46);
+  if (pauseSettingsOpen) {
+    drawSettings();
+    return;
+  }
+
+  text("PAUSED", 300, midY(300), 46);
 
   button(PAUSE_RESUME_BTN);
-  text("PLAY", 300, midY(441), 26);
+  text("PLAY", 300, midY(411), 26);
+
+  button(PAUSE_SETTINGS_BTN);
+  text("SETTINGS", 300, midY(496), 26);
 
   button(PAUSE_MENU_BTN);
-  text("MAIN MENU", 300, midY(531), 26);
+  text("MAIN MENU", 300, midY(581), 26);
 
-  plainText("Esc or Enter to resume", 300, midY(600), 15, "#c3c8dc");
+  plainText("Esc or Enter to resume", 300, midY(650), 15, "#c3c8dc");
 }
 
 function drawGameOver() {

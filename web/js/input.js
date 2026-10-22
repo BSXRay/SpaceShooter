@@ -52,7 +52,11 @@ window.addEventListener("keydown", e => {
       if (mode === "playing") {
         pauseGame();
       } else if (mode === "paused") {
-        resumeGame();
+        if (pauseSettingsOpen) {
+          pauseSettingsOpen = false;
+        } else {
+          resumeGame();
+        }
       }
     }
 
@@ -80,7 +84,7 @@ window.addEventListener("keydown", e => {
       toMainMenu();
     }
 
-    if (mode === "paused" && k === "enter") {
+    if (mode === "paused" && k === "enter" && !pauseSettingsOpen) {
       resumeGame();
     }
 
@@ -118,6 +122,30 @@ function point(e) {
   };
 }
 
+// Shared handling for the settings screen (main menu and pause menu).
+// Returns "back" when the back button was pressed, "slider" while dragging.
+function settingsPointerDown(p) {
+  if (sliderHit(p, SETTINGS_SLIDERS.musicVol)) {
+    dragSlider = "musicVol";
+    settings.musicVol = sliderValue(p, SETTINGS_SLIDERS.musicVol);
+    applyVolume();
+    return "slider";
+  }
+
+  if (sliderHit(p, SETTINGS_SLIDERS.sfxVol)) {
+    dragSlider = "sfxVol";
+    settings.sfxVol = sliderValue(p, SETTINGS_SLIDERS.sfxVol);
+    applyVolume();
+    return "slider";
+  }
+
+  if (inRect(p, SETTINGS_BACK_BTN)) {
+    return "back";
+  }
+
+  return null;
+}
+
 canvas.addEventListener("pointerdown", e => {
   e.preventDefault();
 
@@ -125,15 +153,7 @@ canvas.addEventListener("pointerdown", e => {
 
   if (mode === "menu") {
     if (menuSettingsOpen) {
-      if (sliderHit(p, SETTINGS_SLIDERS.musicVol)) {
-        dragSlider = "musicVol";
-        settings.musicVol = sliderValue(p, SETTINGS_SLIDERS.musicVol);
-        applyVolume();
-      } else if (sliderHit(p, SETTINGS_SLIDERS.sfxVol)) {
-        dragSlider = "sfxVol";
-        settings.sfxVol = sliderValue(p, SETTINGS_SLIDERS.sfxVol);
-        applyVolume();
-      } else if (inRect(p, SETTINGS_BACK_BTN)) {
+      if (settingsPointerDown(p) === "back") {
         menuSettingsOpen = false;
       }
 
@@ -171,8 +191,18 @@ canvas.addEventListener("pointerdown", e => {
   }
 
   if (mode === "paused") {
+    if (pauseSettingsOpen) {
+      if (settingsPointerDown(p) === "back") {
+        pauseSettingsOpen = false;
+      }
+
+      return;
+    }
+
     if (inRect(p, PAUSE_RESUME_BTN)) {
       resumeGame();
+    } else if (inRect(p, PAUSE_SETTINGS_BTN)) {
+      pauseSettingsOpen = true;
     } else if (inRect(p, PAUSE_MENU_BTN)) {
       toMainMenu();
     }
