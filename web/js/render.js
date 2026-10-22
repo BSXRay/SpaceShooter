@@ -449,18 +449,18 @@ function drawSettings() {
 // --------------------------------------------------
 
 function drawHUD() {
-  text("LIVES: " + lives, 70, 40, 24, "left");
-  text("SCORE: " + score, 585, 40, 24, "right");
+  text("LIVES: " + lives, HUD_LIVES_X, HUD_Y, 24, "left");
+  text("SCORE: " + score, HUD_SCORE_X, HUD_Y, 24, "right");
 
   if (autoShoot) {
     ctx.fillStyle = "#54ffc5";
     ctx.font = "bold " + fontPx(14) + "px " + UI_FONT;
     ctx.textAlign = "center";
-    ctx.fillText("AUTO", 300, 84);
+    ctx.fillText("AUTO", 300, AUTO_LABEL_Y);
   }
 
   // Which difficulty the current round runs on.
-  plainText("DIFFICULTY: " + difficulty.name, 300, 104, 13, "#54ffc5");
+  plainText("DIFFICULTY: " + difficulty.name, 300, DIFF_LABEL_Y, 13, "#54ffc5");
 }
 
 function drawPauseButton() {
@@ -486,8 +486,8 @@ function drawPauseButton() {
   ctx.stroke();
 
   ctx.fillStyle = "#ffffff";
-  ctx.fillRect(b.x + 17, b.y + 13, 7, 20);
-  ctx.fillRect(b.x + 28, b.y + 13, 7, 20);
+  ctx.fillRect(b.x + 17, b.y + 14, 9, 24);
+  ctx.fillRect(b.x + 34, b.y + 14, 9, 24);
 }
 
 function drawPauseOverlay() {
@@ -522,20 +522,24 @@ function drawGameOver() {
   text("Press R or click to return", 300, midY(540), 20);
 }
 
-function drawHearts(x, y, hp, maxHp) {
-  const size = 5;
-  const gap = 13;
+function drawHearts(x, y, hp, maxHp, opts = {}) {
+  const size = opts.size || 5;
+  const gap = opts.gap || 13;
+  const on = opts.on || "#ff2b2b";
+  const off = opts.off || "#4a4a4a";
+  const edgeOn = opts.edgeOn || "#7a0000";
+  const edgeOff = opts.edgeOff || "#262626";
   const total = maxHp * gap - (gap - size * 2);
   let cx = x - total / 2 + size;
 
   for (let i = 0; i < maxHp; i++) {
     ctx.beginPath();
     ctx.arc(cx, y, size, 0, Math.PI * 2);
-    ctx.fillStyle = i < hp ? "#ff2b2b" : "#4a4a4a";
+    ctx.fillStyle = i < hp ? on : off;
     ctx.fill();
 
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = i < hp ? "#7a0000" : "#262626";
+    ctx.lineWidth = Math.max(1.5, size * 0.25);
+    ctx.strokeStyle = i < hp ? edgeOn : edgeOff;
     ctx.stroke();
 
     cx += gap;
@@ -752,6 +756,22 @@ function drawGame() {
   if (!drawImage("ship", ship.x, ship.y, 100, 120)) {
     fallbackShip();
   }
+
+  // Remaining lives as pips under the ship, clamped to stay on screen.
+  drawHearts(
+    ship.x,
+    Math.min(ship.y + 74, H - 12),
+    lives,
+    5,
+    {
+      size: SHIP_PIPS.size,
+      gap: SHIP_PIPS.gap,
+      on: "#54ffc5",
+      off: "#3b4666",
+      edgeOn: "#0b3f33",
+      edgeOff: "#1c2338"
+    }
+  );
 
   // Power-up pickups
   drawPickups();

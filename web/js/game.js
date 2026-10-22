@@ -132,6 +132,17 @@ const DIFFICULTIES = [
 
 let difficulty = DIFFICULTIES[0];
 
+// In-game HUD row. Kept below the top edge so camera cutouts and rounded
+// display corners cannot cover it.
+const HUD_Y = 70;
+const HUD_LIVES_X = 78;
+const HUD_SCORE_X = 588;
+const AUTO_LABEL_Y = 114;
+const DIFF_LABEL_Y = 134;
+
+// Player life pips shown under the ship.
+const SHIP_PIPS = { size: 8, gap: 21 };
+
 // Hitboxes for menu, pause button and overlays (canvas space).
 const MENU_LAYOUT = {
   easy: { x: 120, y: 210, w: 360, h: 62 },
@@ -183,7 +194,7 @@ const DIFFICULTY_LAYOUT = [
   MENU_LAYOUT.insane
 ];
 
-const PAUSE_BTN = { x: 12, y: 12, w: 52, h: 46 };
+const PAUSE_BTN = { x: 10, y: 34, w: 60, h: 52 };
 const PAUSE_RESUME_BTN = { x: 150, y: 370, w: 300, h: 65 };
 const PAUSE_SETTINGS_BTN = { x: 150, y: 455, w: 300, h: 65 };
 const PAUSE_MENU_BTN = { x: 150, y: 540, w: 300, h: 65 };
