@@ -150,7 +150,8 @@ const MENU_LAYOUT = {
   hard: { x: 120, y: 362, w: 360, h: 62 },
   insane: { x: 120, y: 438, w: 360, h: 62 },
   auto: { x: 120, y: 536, w: 360, h: 56 },
-  settings: { x: 120, y: 606, w: 360, h: 56 },
+  settings: { x: 120, y: 606, w: 172, h: 56 },
+  customize: { x: 308, y: 606, w: 172, h: 56 },
   getApp: { x: 120, y: 678, w: 296, h: 50 },
   github: { x: 430, y: 678, w: 50, h: 50 },
   quit: { x: 220, y: 764, w: 160, h: 46 }
@@ -245,6 +246,95 @@ const SETTINGS_SLIDERS = {
   sfxVol: { x: 150, y: 470, w: 300, h: 12 }
 };
 
+// --------------------------------------------------
+// SHIP CUSTOMIZATION
+// --------------------------------------------------
+
+// Hull profiles. The drawn size only changes the look; the hitbox stays
+// the same, so no skin is easier or harder to fly.
+const SHIP_SKINS = [
+  { id: "classic", name: "CLASSIC", w: 100, h: 120 },
+  { id: "bulwark", name: "BULWARK", w: 116, h: 112 },
+  { id: "dart", name: "DART", w: 86, h: 128 }
+];
+
+// Normalized slider values (0..1). Hue and lightness are centered: 0.5
+// keeps the original sprite untouched.
+const shipStyle = {
+  skin: 0,
+  hue: 0.5,
+  sat: 0.5,
+  light: 0.5
+};
+
+const CUSTOMIZE_PREVIEW = { x: 150, y: 170, w: 300, h: 180 };
+
+const CUSTOMIZE_SKINS = [
+  { x: 120, y: 368, w: 110, h: 44 },
+  { x: 245, y: 368, w: 110, h: 44 },
+  { x: 370, y: 368, w: 110, h: 44 }
+];
+
+const CUSTOMIZE_SLIDERS = {
+  hue: { x: 150, y: 480, w: 300, h: 12 },
+  sat: { x: 150, y: 575, w: 300, h: 12 },
+  light: { x: 150, y: 670, w: 300, h: 12 }
+};
+
+const CUSTOMIZE_BACK_BTN = { x: 150, y: 750, w: 300, h: 60 };
+
+function loadShipStyle() {
+  const saved = store.get("shipStyle", null);
+
+  if (!saved || typeof saved !== "object") {
+    return;
+  }
+
+  const skin = Math.round(Number(saved.skin));
+
+  if (Number.isFinite(skin)) {
+    shipStyle.skin = Math.max(0, Math.min(SHIP_SKINS.length - 1, skin));
+  }
+
+  shipStyle.hue = clamp01(saved.hue, 0.5);
+  shipStyle.sat = clamp01(saved.sat, 0.5);
+  shipStyle.light = clamp01(saved.light, 0.5);
+}
+
+function saveShipStyle() {
+  store.set("shipStyle", {
+    skin: shipStyle.skin,
+    hue: shipStyle.hue,
+    sat: shipStyle.sat,
+    light: shipStyle.light
+  });
+}
+
+// Hue rotation in degrees, plus the CSS filter that applies the whole
+// style. Canvas filters recolor the sprite at draw time, so dragging the
+// sliders costs nothing besides the usual frame.
+function shipHueDegrees() {
+  return (shipStyle.hue - 0.5) * 360;
+}
+
+function shipFilter() {
+  const hue = shipHueDegrees();
+  const sat = shipStyle.sat * 2;
+  const light = 0.35 + shipStyle.light * 1.3;
+
+  if (
+    Math.abs(hue) < 0.5 &&
+    Math.abs(sat - 1) < 0.01 &&
+    Math.abs(light - 1) < 0.01
+  ) {
+    return "none";
+  }
+
+  return "hue-rotate(" + hue.toFixed(1) + "deg) " +
+    "saturate(" + sat.toFixed(2) + ") " +
+    "brightness(" + light.toFixed(2) + ")";
+}
+
 // Recomputes the position and size of every UI element for the current
 // world height. The stored values are the 900 unit design positions:
 // menus and overlays stay vertically centered, bottom anchored elements
@@ -263,6 +353,11 @@ function layoutUI() {
   L.easy.h = L.normal.h = L.hard.h = L.insane.h = 62 * uiScale;
   L.auto.h = L.settings.h = 56 * uiScale;
   L.getApp.h = 50 * uiScale;
+
+  // SETTINGS and CUSTOMIZE share one row.
+  L.settings.w = L.customize.w = 172 * uiScale;
+  L.settings.x = 120;
+  L.customize.x = 480 - L.customize.w;
 
   L.github.w = L.github.h = 50 * uiScale;
   L.github.x = 480 - L.github.w;
@@ -285,17 +380,65 @@ function layoutUI() {
   SETTINGS_SLIDERS.sfxVol.y = midY(470);
   SETTINGS_SLIDERS.musicVol.h = SETTINGS_SLIDERS.sfxVol.h = 12 * uiScale;
 
+  CUSTOMIZE_PREVIEW.y = midY(170);
+  CUSTOMIZE_PREVIEW.h = 180 * uiScale;
+
+  const skinGap = 15 * uiScale;
+  const skinW = 110 * uiScale;
+  const skinTotal = CUSTOMIZE_SKINS.length * skinW +
+    (CUSTOMIZE_SKINS.length - 1) * skinGap;
+  let skinX = (W - skinTotal) / 2;
+
+  for (const b of CUSTOMIZE_SKINS) {
+    b.x = skinX;
+    b.y = midY(368);
+    b.w = skinW;
+    b.h = 44 * uiScale;
+    skinX += skinW + skinGap;
+  }
+
+  CUSTOMIZE_SLIDERS.hue.y = midY(480);
+  CUSTOMIZE_SLIDERS.sat.y = midY(575);
+  CUSTOMIZE_SLIDERS.light.y = midY(670);
+  CUSTOMIZE_SLIDERS.hue.h = 12 * uiScale;
+  CUSTOMIZE_SLIDERS.sat.h = 12 * uiScale;
+  CUSTOMIZE_SLIDERS.light.h = 12 * uiScale;
+
+  CUSTOMIZE_BACK_BTN.y = midY(750);
+  CUSTOMIZE_BACK_BTN.h = 60 * uiScale;
+
   AWARD.BADGE_Y = midY(640);
   AWARD.SLOT_Y = H - 42;
 }
 
 let menuSettingsOpen = false;
+let menuCustomizeOpen = false;
 let pauseSettingsOpen = false;
 
 const settings = {
   musicVol: 0.4,
   sfxVol: 0.8
 };
+
+// Volumes and ship style are restored once at start-up. main.js applies
+// the volumes right after the first layout pass.
+function saveSettings() {
+  store.set("settings", {
+    musicVol: settings.musicVol,
+    sfxVol: settings.sfxVol
+  });
+}
+
+(function loadPersistedState() {
+  const saved = store.get("settings", null);
+
+  if (saved && typeof saved === "object") {
+    settings.musicVol = clamp01(saved.musicVol, 0.4);
+    settings.sfxVol = clamp01(saved.sfxVol, 0.8);
+  }
+
+  loadShipStyle();
+})();
 
 function inRect(p, r) {
   return (

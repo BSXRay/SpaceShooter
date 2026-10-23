@@ -330,6 +330,11 @@ function drawMenu() {
     return;
   }
 
+  if (menuCustomizeOpen) {
+    drawCustomize();
+    return;
+  }
+
   text("SPACE SHOOTER", 300, midY(130), 42);
 
   const L = MENU_LAYOUT;
@@ -352,13 +357,21 @@ function drawMenu() {
     20
   );
 
-  // Settings button
+  // Settings and customization share one row.
   button(L.settings);
   text(
     "SETTINGS",
     L.settings.x + L.settings.w / 2,
     L.settings.y + 34,
-    20
+    18
+  );
+
+  button(L.customize);
+  text(
+    "CUSTOMIZE",
+    L.customize.x + L.customize.w / 2,
+    L.customize.y + 34,
+    18
   );
 
   // Link to the release downloads.
@@ -396,7 +409,7 @@ function drawMenu() {
 // SETTINGS SCREEN
 // --------------------------------------------------
 
-function slider(p, label, value) {
+function slider(p, label, value, valueText) {
   // Label
   text(label, 300, p.y - 40 * uiScale, 22);
 
@@ -442,7 +455,7 @@ function slider(p, label, value) {
 
   // Value
   plainText(
-    Math.round(value * 100) + "%",
+    valueText !== undefined ? valueText : Math.round(value * 100) + "%",
     300, p.y + 55 * uiScale, 18, "#c3c8dc"
   );
 }
@@ -458,6 +471,74 @@ function drawSettings() {
     "BACK",
     SETTINGS_BACK_BTN.x + SETTINGS_BACK_BTN.w / 2,
     SETTINGS_BACK_BTN.y + 39,
+    24
+  );
+}
+
+// --------------------------------------------------
+// CUSTOMIZATION SCREEN
+// --------------------------------------------------
+
+// Draws the player sprite with the current color filter. Returns false
+// when the sprite is missing so callers can fall back to a vector ship.
+function drawShipSprite(cx, cy, w, h) {
+  if (imageStatus.ship !== "ok") {
+    return false;
+  }
+
+  ctx.save();
+  ctx.filter = shipFilter();
+  ctx.drawImage(imgs.ship, cx - w / 2, cy - h / 2, w, h);
+  ctx.restore();
+
+  return true;
+}
+
+function drawCustomize() {
+  text("CUSTOMIZE", 300, midY(120), 44);
+
+  // Preview of the ship on a dark panel.
+  const pv = CUSTOMIZE_PREVIEW;
+
+  ctx.fillStyle = "rgba(9,12,26,.82)";
+  pixelRect(pv.x, pv.y, pv.w, pv.h, 14);
+  ctx.fill();
+
+  ctx.strokeStyle = "#3b4666";
+  ctx.lineWidth = 3;
+  pixelRect(pv.x, pv.y, pv.w, pv.h, 14);
+  ctx.stroke();
+
+  const skin = SHIP_SKINS[shipStyle.skin];
+
+  drawShipSprite(300, pv.y + pv.h / 2, skin.w * 1.3, skin.h * 1.3);
+
+  // Hull selection.
+  for (let i = 0; i < CUSTOMIZE_SKINS.length; i++) {
+    const r = CUSTOMIZE_SKINS[i];
+
+    button(r, i === shipStyle.skin);
+    text(SHIP_SKINS[i].name, r.x + r.w / 2, r.y + r.h / 2 + 5, 12);
+  }
+
+  slider(
+    CUSTOMIZE_SLIDERS.hue, "HUE", shipStyle.hue,
+    Math.round(shipHueDegrees()) + " deg"
+  );
+  slider(
+    CUSTOMIZE_SLIDERS.sat, "SATURATION", shipStyle.sat,
+    Math.round(shipStyle.sat * 200) + "%"
+  );
+  slider(
+    CUSTOMIZE_SLIDERS.light, "LIGHTNESS", shipStyle.light,
+    Math.round((0.35 + shipStyle.light * 1.3) * 100) + "%"
+  );
+
+  button(CUSTOMIZE_BACK_BTN);
+  text(
+    "BACK",
+    CUSTOMIZE_BACK_BTN.x + CUSTOMIZE_BACK_BTN.w / 2,
+    CUSTOMIZE_BACK_BTN.y + CUSTOMIZE_BACK_BTN.h / 2 + 8,
     24
   );
 }
@@ -771,7 +852,9 @@ function drawGame() {
   }
 
   // Player
-  if (!drawImage("ship", ship.x, ship.y, 100, 120)) {
+  const skin = SHIP_SKINS[shipStyle.skin];
+
+  if (!drawShipSprite(ship.x, ship.y, skin.w, skin.h)) {
     fallbackShip();
   }
 

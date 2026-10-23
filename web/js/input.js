@@ -80,6 +80,10 @@ window.addEventListener("keydown", e => {
       menuSettingsOpen = false;
     }
 
+    if (mode === "menu" && k === "escape" && menuCustomizeOpen) {
+      menuCustomizeOpen = false;
+    }
+
     if (mode === "over" && (k === "r" || k === "enter")) {
       toMainMenu();
     }
@@ -129,6 +133,7 @@ function settingsPointerDown(p) {
     dragSlider = "musicVol";
     settings.musicVol = sliderValue(p, SETTINGS_SLIDERS.musicVol);
     applyVolume();
+    saveSettings();
     return "slider";
   }
 
@@ -136,6 +141,7 @@ function settingsPointerDown(p) {
     dragSlider = "sfxVol";
     settings.sfxVol = sliderValue(p, SETTINGS_SLIDERS.sfxVol);
     applyVolume();
+    saveSettings();
     return "slider";
   }
 
@@ -144,6 +150,29 @@ function settingsPointerDown(p) {
   }
 
   return null;
+}
+
+// Shared handling for the customization screen. Returns true when the
+// back button was pressed, false otherwise.
+function customizePointerDown(p) {
+  for (const key of ["hue", "sat", "light"]) {
+    if (sliderHit(p, CUSTOMIZE_SLIDERS[key])) {
+      dragSlider = key;
+      shipStyle[key] = sliderValue(p, CUSTOMIZE_SLIDERS[key]);
+      saveShipStyle();
+      return false;
+    }
+  }
+
+  for (let i = 0; i < CUSTOMIZE_SKINS.length; i++) {
+    if (inRect(p, CUSTOMIZE_SKINS[i])) {
+      shipStyle.skin = i;
+      saveShipStyle();
+      return false;
+    }
+  }
+
+  return inRect(p, CUSTOMIZE_BACK_BTN);
 }
 
 canvas.addEventListener("pointerdown", e => {
@@ -155,6 +184,14 @@ canvas.addEventListener("pointerdown", e => {
     if (menuSettingsOpen) {
       if (settingsPointerDown(p) === "back") {
         menuSettingsOpen = false;
+      }
+
+      return;
+    }
+
+    if (menuCustomizeOpen) {
+      if (customizePointerDown(p)) {
+        menuCustomizeOpen = false;
       }
 
       return;
@@ -188,6 +225,12 @@ canvas.addEventListener("pointerdown", e => {
     // Settings button
     if (inRect(p, L.settings)) {
       menuSettingsOpen = true;
+      return;
+    }
+
+    // Customization screen (ship skin and colors).
+    if (inRect(p, L.customize)) {
+      menuCustomizeOpen = true;
       return;
     }
 
@@ -244,8 +287,15 @@ canvas.addEventListener("pointermove", e => {
   if (dragSlider) {
     const p = point(e);
 
+    if (Object.prototype.hasOwnProperty.call(CUSTOMIZE_SLIDERS, dragSlider)) {
+      shipStyle[dragSlider] = sliderValue(p, CUSTOMIZE_SLIDERS[dragSlider]);
+      saveShipStyle();
+      return;
+    }
+
     settings[dragSlider] = sliderValue(p, SETTINGS_SLIDERS[dragSlider]);
     applyVolume();
+    saveSettings();
     return;
   }
 
