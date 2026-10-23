@@ -230,22 +230,19 @@ function button(r, active) {
   ctx.stroke();
 }
 
-// Draws the GitHub mark from a 12x12 grid so the button matches the
-// blocky pixel-art panels. Every cell is an exact square.
-const GITHUB_PIXEL_GRID = [
-  "....####....",
-  "..########..",
-  ".##########.",
-  "############",
-  "########.###",
-  "########.###",
-  "############",
-  "##########.#",
-  ".###########",
-  "..########..",
-  "...######...",
-  "....####...."
-];
+// Official GitHub mark (16x16 viewBox). The button panel stays pixel-art,
+// but the logo itself is drawn as-is, so it keeps its smooth curves.
+const GITHUB_MARK_PATH =
+  "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 " +
+  "0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13" +
+  "-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66" +
+  ".07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15" +
+  "-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36" +
+  ".09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 " +
+  "2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 " +
+  "0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z";
+
+let githubMark = null;
 
 function githubButton(r) {
   const cx = r.x + r.w / 2;
@@ -284,23 +281,19 @@ function githubButton(r) {
   pixelRect(r.x + 4, r.y + 4, r.w - 8, r.h - 8, Math.max(2, cut - 4));
   ctx.stroke();
 
-  // The mark itself: square cells, no anti-aliasing, snapped to integers.
-  const rows = GITHUB_PIXEL_GRID.length;
-  const cols = GITHUB_PIXEL_GRID[0].length;
-  const cell = Math.floor(r.w * 0.56 / cols);
-  const markW = cell * cols;
-  const markH = cell * rows;
-  const ox = Math.round(cx - markW / 2);
-  const oy = Math.round(cy - markH / 2);
+  if (!githubMark && typeof Path2D === "function") {
+    githubMark = new Path2D(GITHUB_MARK_PATH);
+  }
 
-  ctx.fillStyle = "#eaf6ff";
+  if (githubMark) {
+    const size = r.w * 0.56;
 
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      if (GITHUB_PIXEL_GRID[y][x] === "#") {
-        ctx.fillRect(ox + x * cell, oy + y * cell, cell, cell);
-      }
-    }
+    ctx.save();
+    ctx.translate(cx - size / 2, cy - size / 2);
+    ctx.scale(size / 16, size / 16);
+    ctx.fillStyle = "#eaf6ff";
+    ctx.fill(githubMark);
+    ctx.restore();
   }
 }
 

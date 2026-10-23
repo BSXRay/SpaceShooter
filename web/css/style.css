@@ -63,17 +63,32 @@ canvas {
   margin: 10px 4px;
 }
 
-/* Fill the entire screen on touch devices in portrait: the canvas covers
-   the whole display. The game adapts its world height to the display
-   aspect ratio, so there is neither a letterbox nor any distortion.
-   Landscape keeps the classic 2:3 ratio, which fits a wide screen far
-   better than an extremely flat play field. */
-@media (pointer: coarse) and (orientation: portrait) {
+/* Touch devices are a game console, not a document: the page never
+   scrolls and the keyboard hints stay hidden. This used to apply only in
+   portrait, so tablets in landscape could still be scrolled like a
+   website and showed the WASD/arrow hints. */
+@media (pointer: coarse), (hover: none) and (any-pointer: coarse) {
   html, body {
     height: 100%;
     overflow: hidden;
   }
 
+  body {
+    min-height: 100dvh;
+  }
+
+  .help {
+    display: none;
+  }
+}
+
+/* Fill the entire screen on touch devices in portrait: the canvas covers
+   the whole display. The game adapts its world height to the display
+   aspect ratio, so there is neither a letterbox nor any distortion.
+   Landscape keeps the classic 2:3 ratio, which fits a wide screen far
+   better than an extremely flat play field. */
+@media (pointer: coarse) and (orientation: portrait),
+       (hover: none) and (any-pointer: coarse) and (orientation: portrait) {
   body {
     min-height: 100dvh;
     background: #090b16;
@@ -93,9 +108,5 @@ canvas {
     aspect-ratio: auto;
     background: #090b16;
     outline: none;
-  }
-
-  .help {
-    display: none;
   }
 }
