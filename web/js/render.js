@@ -345,7 +345,7 @@ function drawMenu() {
     const diff = DIFFICULTIES[i];
 
     button(r);
-    text(diff.name, r.x + r.w / 2, r.y + r.h / 2 + 9, 24);
+    text(diff.name, r.x + r.w / 2, r.y + r.h / 2 + (r.h > 64 ? 14 : 9), r.h > 64 ? 26 : 24);
   }
 
   // Auto-shoot button
@@ -353,8 +353,8 @@ function drawMenu() {
   text(
     "AUTO-SHOOT: " + (autoShoot ? "ON" : "OFF"),
     L.auto.x + L.auto.w / 2,
-    L.auto.y + 34,
-    20
+    L.auto.y + L.auto.h / 2 + 9,
+    L.auto.h > 58 ? 22 : 20
   );
 
   // Settings and customization share one row.
@@ -362,16 +362,16 @@ function drawMenu() {
   text(
     "SETTINGS",
     L.settings.x + L.settings.w / 2,
-    L.settings.y + 34,
-    18
+    L.settings.y + L.settings.h / 2 + 8,
+    L.settings.h > 58 ? 20 : 18
   );
 
   button(L.customize);
   text(
     "CUSTOMIZE",
     L.customize.x + L.customize.w / 2,
-    L.customize.y + 34,
-    18
+    L.customize.y + L.customize.h / 2 + 8,
+    L.customize.h > 58 ? 20 : 18
   );
 
   // Link to the release downloads.
@@ -380,7 +380,7 @@ function drawMenu() {
     "GET THE ANDROID APP",
     L.getApp.x + L.getApp.w / 2,
     L.getApp.y + L.getApp.h / 2 + 6,
-    16
+    L.getApp.h > 52 ? 18 : 16
   );
 
   // Link to the source repository.
@@ -389,7 +389,7 @@ function drawMenu() {
   // Closing the app only makes sense inside the Android wrapper.
   if (IS_NATIVE_APP) {
     button(L.quit);
-    text("QUIT", L.quit.x + L.quit.w / 2, L.quit.y + L.quit.h / 2 + 6, 16);
+    text("QUIT", L.quit.x + L.quit.w / 2, L.quit.y + L.quit.h / 2 + 6, L.quit.h > 48 ? 18 : 16);
   }
 
   if (imageStatus.menu === "error") {

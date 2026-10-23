@@ -144,6 +144,27 @@ const DIFF_LABEL_Y = 134;
 const SHIP_PIPS = { size: 8, gap: 21 };
 
 // Hitboxes for menu, pause button and overlays (canvas space).
+function isTouchDevice() {
+  try {
+    if (typeof window !== "undefined" && window.matchMedia) {
+      if (window.matchMedia("(pointer: coarse)").matches ||
+          window.matchMedia("(hover: none)").matches) {
+        return true;
+      }
+    }
+
+    if (typeof navigator !== "undefined") {
+      if (/Android|iPhone|iPad|iPod|Tablet/i.test(navigator.userAgent)) {
+        return true;
+      }
+    }
+  } catch (e) {
+    /* ignore */
+  }
+
+  return false;
+}
+
 const MENU_LAYOUT = {
   easy: { x: 120, y: 210, w: 360, h: 62 },
   normal: { x: 120, y: 286, w: 360, h: 62 },
@@ -341,31 +362,48 @@ function shipFilter() {
 // follow the lower edge. On short displays the whole interface shrinks.
 function layoutUI() {
   const L = MENU_LAYOUT;
+  const touch = isTouchDevice();
+
+  // On mobile/tablet the UI must stay off the difficulty buttons. Push the
+  // bottom row down and make every button a little bigger so thumbs hit.
+  const diffH = touch ? 70 * uiScale : 62 * uiScale;
+  const midH = touch ? 64 * uiScale : 56 * uiScale;
+  const linkH = touch ? 58 * uiScale : 50 * uiScale;
+  const bottomGap = touch ? 22 * uiScale : 0;
 
   L.easy.y = midY(210);
   L.normal.y = midY(286);
   L.hard.y = midY(362);
   L.insane.y = midY(438);
   L.auto.y = midY(536);
-  L.settings.y = midY(606);
-  L.getApp.y = midY(678);
+  L.settings.y = midY(touch ? 628 : 606);
+  L.customize.y = midY(touch ? 628 : 606);
+  L.getApp.y = midY(touch ? 720 : 678);
 
-  L.easy.h = L.normal.h = L.hard.h = L.insane.h = 62 * uiScale;
-  L.auto.h = L.settings.h = 56 * uiScale;
-  L.getApp.h = 50 * uiScale;
+  L.easy.h = L.normal.h = L.hard.h = L.insane.h = diffH;
+  L.auto.h = midH;
+  L.settings.h = L.customize.h = midH;
+  L.getApp.h = linkH;
 
   // SETTINGS and CUSTOMIZE share one row.
-  L.settings.w = L.customize.w = 172 * uiScale;
-  L.settings.x = 120;
-  L.customize.x = 480 - L.customize.w;
+  if (touch) {
+    L.settings.w = L.customize.w = 168 * uiScale;
+    L.settings.x = 120;
+    L.customize.x = 480 - L.customize.w;
+    L.customize.y = L.settings.y;
+  } else {
+    L.settings.w = L.customize.w = 172 * uiScale;
+    L.settings.x = 120;
+    L.customize.x = 480 - L.customize.w;
+  }
 
-  L.github.w = L.github.h = 50 * uiScale;
+  L.github.w = L.github.h = touch ? 58 * uiScale : 50 * uiScale;
   L.github.x = 480 - L.github.w;
   L.github.y = L.getApp.y + (L.getApp.h - L.github.h) / 2;
 
-  L.quit.y = midY(764);
-  L.quit.w = 160 * uiScale;
-  L.quit.h = 46 * uiScale;
+  L.quit.y = midY(touch ? 812 : 764);
+  L.quit.w = touch ? 176 * uiScale : 160 * uiScale;
+  L.quit.h = touch ? 52 * uiScale : 46 * uiScale;
   L.quit.x = (W - L.quit.w) / 2;
 
   PAUSE_RESUME_BTN.y = midY(370);

@@ -1,0 +1,9 @@
+feat(menu): ship customization with hue/saturation/lightness
+
+Add a CUSTOMIZE button to the main menu with a new sub-screen: pick one of
+three hulls, use three sliders to recolor the ship (hue, saturation,
+lightness) and save it via a universal JSON store (localStorage with
+in-memory fallback). The in-game ship uses the chosen skin and canvas
+filter; hitboxes stay the same. Volumes now persist as well. Button row
+rearranged for the new entry. Ship styling survives OTA updates and app
+restarts.
