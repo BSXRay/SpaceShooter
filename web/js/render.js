@@ -549,6 +549,7 @@ function drawCustomize() {
 
 function drawHUD() {
   text("LIVES: " + lives, HUD_LIVES_X, HUD_Y, 24, "left");
+  text("KILLS: " + kills, HUD_LIVES_X, HUD_KILLS_Y, 20, "left");
   text("SCORE: " + score, HUD_SCORE_X, HUD_Y, 24, "right");
 
   if (autoShoot) {
@@ -616,9 +617,10 @@ function drawGameOver() {
   blurBackdrop(8);
   dim(0.55);
 
-  text("GAME OVER", 300, midY(420), 46);
-  text("SCORE: " + score, 300, midY(480), 30);
-  text("Press R or click to return", 300, midY(540), 20);
+  text("GAME OVER", 300, midY(400), 46);
+  text("SCORE: " + gameOverStats.score, 300, midY(470), 30);
+  text("KILLS: " + gameOverStats.kills, 300, midY(520), 30);
+  text("Press R or click to return", 300, midY(590), 20);
 }
 
 function drawHearts(x, y, hp, maxHp, opts = {}) {

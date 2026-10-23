@@ -15,6 +15,7 @@ let pickups;
 
 let lives = 5;
 let score = 0;
+let kills = 0;
 let ticks = 0;
 let meteorTimer = 0;
 
@@ -136,6 +137,7 @@ let difficulty = DIFFICULTIES[0];
 // display corners cannot cover it.
 const HUD_Y = 70;
 const HUD_LIVES_X = 78;
+const HUD_KILLS_Y = 96;
 const HUD_SCORE_X = 588;
 const AUTO_LABEL_Y = 114;
 const DIFF_LABEL_Y = 134;
@@ -518,6 +520,7 @@ function sliderHit(p, slider) {
 function reset() {
   lives = 5;
   score = 0;
+  kills = 0;
   ticks = 0;
   meteorTimer = 0;
 
@@ -554,8 +557,12 @@ function startGame(id) {
   }
 }
 
+// Game-over screen stats (drawn by render.js). Populated in endGame.
+let gameOverStats = { score: 0, kills: 0 };
+
 function endGame() {
   mode = "over";
+  gameOverStats = { score: score, kills: kills };
   audio.music.pause();
 }
 
@@ -589,6 +596,7 @@ function toMainMenu() {
   mode = "menu";
   pointer = null;
   pauseSettingsOpen = false;
+  gameOverStats = { score: 0, kills: 0 };
   audio.music.pause();
 }
 
@@ -921,6 +929,7 @@ function update() {
       if (a.hp <= 0) {
         lives = Math.min(5, lives + 1);
         score++;
+        kills++;
 
         a.exploding = true;
         a.timer = 8;
