@@ -266,7 +266,7 @@ const PAUSE_MENU_BTN = { x: 150, y: 540, w: 300, h: 65 };
 const SETTINGS_BACK_BTN = { x: 150, y: 640, w: 300, h: 60 };
 const SETTINGS_SLIDERS = {
   musicVol: { x: 150, y: 350, w: 300, h: 12 },
-  sfxVol: { x: 150, y: 470, w: 300, h: 12 }
+  sfxVol: { x: 150, y: 480, w: 300, h: 12 }
 };
 
 // --------------------------------------------------
@@ -290,21 +290,21 @@ const shipStyle = {
   light: 0.5
 };
 
-const CUSTOMIZE_PREVIEW = { x: 150, y: 170, w: 300, h: 180 };
+const CUSTOMIZE_PREVIEW = { x: 150, y: 160, w: 300, h: 164 };
 
 const CUSTOMIZE_SKINS = [
-  { x: 120, y: 368, w: 110, h: 44 },
-  { x: 245, y: 368, w: 110, h: 44 },
-  { x: 370, y: 368, w: 110, h: 44 }
+  { x: 120, y: 330, w: 110, h: 44 },
+  { x: 245, y: 330, w: 110, h: 44 },
+  { x: 370, y: 330, w: 110, h: 44 }
 ];
 
 const CUSTOMIZE_SLIDERS = {
-  hue: { x: 150, y: 480, w: 300, h: 12 },
+  hue: { x: 150, y: 445, w: 300, h: 12 },
   sat: { x: 150, y: 575, w: 300, h: 12 },
-  light: { x: 150, y: 670, w: 300, h: 12 }
+  light: { x: 150, y: 705, w: 300, h: 12 }
 };
 
-const CUSTOMIZE_BACK_BTN = { x: 150, y: 750, w: 300, h: 60 };
+const CUSTOMIZE_BACK_BTN = { x: 150, y: 795, w: 300, h: 60 };
 
 function loadShipStyle() {
   const saved = store.get("shipStyle", null);
@@ -417,11 +417,11 @@ function layoutUI() {
   SETTINGS_BACK_BTN.h = 60 * uiScale;
 
   SETTINGS_SLIDERS.musicVol.y = midY(350);
-  SETTINGS_SLIDERS.sfxVol.y = midY(470);
+  SETTINGS_SLIDERS.sfxVol.y = midY(480);
   SETTINGS_SLIDERS.musicVol.h = SETTINGS_SLIDERS.sfxVol.h = 12 * uiScale;
 
-  CUSTOMIZE_PREVIEW.y = midY(170);
-  CUSTOMIZE_PREVIEW.h = 180 * uiScale;
+  CUSTOMIZE_PREVIEW.y = midY(160);
+  CUSTOMIZE_PREVIEW.h = 164 * uiScale;
 
   const skinGap = 15 * uiScale;
   const skinW = 110 * uiScale;
@@ -431,20 +431,20 @@ function layoutUI() {
 
   for (const b of CUSTOMIZE_SKINS) {
     b.x = skinX;
-    b.y = midY(368);
+    b.y = midY(330);
     b.w = skinW;
     b.h = 44 * uiScale;
     skinX += skinW + skinGap;
   }
 
-  CUSTOMIZE_SLIDERS.hue.y = midY(480);
+  CUSTOMIZE_SLIDERS.hue.y = midY(445);
   CUSTOMIZE_SLIDERS.sat.y = midY(575);
-  CUSTOMIZE_SLIDERS.light.y = midY(670);
+  CUSTOMIZE_SLIDERS.light.y = midY(705);
   CUSTOMIZE_SLIDERS.hue.h = 12 * uiScale;
   CUSTOMIZE_SLIDERS.sat.h = 12 * uiScale;
   CUSTOMIZE_SLIDERS.light.h = 12 * uiScale;
 
-  CUSTOMIZE_BACK_BTN.y = midY(750);
+  CUSTOMIZE_BACK_BTN.y = midY(795);
   CUSTOMIZE_BACK_BTN.h = 60 * uiScale;
 
   AWARD.BADGE_Y = midY(640);

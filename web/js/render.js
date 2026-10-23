@@ -456,7 +456,7 @@ function slider(p, label, value, valueText) {
   // Value
   plainText(
     valueText !== undefined ? valueText : Math.round(value * 100) + "%",
-    300, p.y + 55 * uiScale, 18, "#c3c8dc"
+    300, p.y + 62 * uiScale, 18, "#c3c8dc"
   );
 }
 
