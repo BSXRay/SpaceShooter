@@ -373,6 +373,12 @@ function drawMenu() {
   // Link to the source repository.
   githubButton(L.github);
 
+  // Closing the app only makes sense inside the Android wrapper.
+  if (IS_NATIVE_APP) {
+    button(L.quit);
+    text("QUIT", L.quit.x + L.quit.w / 2, L.quit.y + L.quit.h / 2 + 6, 16);
+  }
+
   if (imageStatus.menu === "error") {
     plainText(
       "Background not loaded – fallback active",

@@ -162,6 +162,12 @@ canvas.addEventListener("pointerdown", e => {
 
     const L = MENU_LAYOUT;
 
+    // Quit button (Android app only).
+    if (IS_NATIVE_APP && inRect(p, L.quit)) {
+      quitApp();
+      return;
+    }
+
     // Links to the repository and the release downloads.
     if (inCircle(p, L.github)) {
       openExternal(REPO_URL);

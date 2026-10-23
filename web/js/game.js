@@ -152,7 +152,8 @@ const MENU_LAYOUT = {
   auto: { x: 120, y: 536, w: 360, h: 56 },
   settings: { x: 120, y: 606, w: 360, h: 56 },
   getApp: { x: 120, y: 678, w: 296, h: 50 },
-  github: { x: 430, y: 678, w: 50, h: 50 }
+  github: { x: 430, y: 678, w: 50, h: 50 },
+  quit: { x: 220, y: 764, w: 160, h: 46 }
 };
 
 const REPO_URL = "https://github.com/BSXRay/SpaceShooter";
@@ -184,6 +185,44 @@ function openExternal(url) {
     window.location.href = url;
   } catch (e) {
     /* nowhere to navigate to (tests) */
+  }
+}
+
+// True inside the Android app. The quit button only exists there.
+const IS_NATIVE_APP = (() => {
+  try {
+    const cap = window.Capacitor;
+    return Boolean(cap && typeof cap.isNativePlatform === "function" &&
+      cap.isNativePlatform());
+  } catch (e) {
+    return false;
+  }
+})();
+
+// Closes the app through the Capacitor App plugin. That plugin is part of
+// the installed APK, so the button keeps working through OTA updates.
+function quitApp() {
+  let app = null;
+
+  try {
+    const cap = window.Capacitor;
+    app = cap && cap.Plugins ? cap.Plugins.App : null;
+  } catch (e) {
+    app = null;
+  }
+
+  if (!app || typeof app.exitApp !== "function") {
+    return false;
+  }
+
+  try {
+    const result = app.exitApp();
+    if (result && typeof result.catch === "function") {
+      result.catch(() => {});
+    }
+    return true;
+  } catch (e) {
+    return false;
   }
 }
 
@@ -228,6 +267,11 @@ function layoutUI() {
   L.github.w = L.github.h = 50 * uiScale;
   L.github.x = 480 - L.github.w;
   L.github.y = L.getApp.y + (L.getApp.h - L.github.h) / 2;
+
+  L.quit.y = midY(764);
+  L.quit.w = 160 * uiScale;
+  L.quit.h = 46 * uiScale;
+  L.quit.x = (W - L.quit.w) / 2;
 
   PAUSE_RESUME_BTN.y = midY(370);
   PAUSE_SETTINGS_BTN.y = midY(455);
