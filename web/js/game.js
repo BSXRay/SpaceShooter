@@ -438,13 +438,13 @@ function layoutUI() {
   }
 
   CUSTOMIZE_SLIDERS.hue.y = midY(480);
-  CUSTOMIZE_SLIDERS.sat.y = midY(575);
-  CUSTOMIZE_SLIDERS.light.y = midY(670);
+  CUSTOMIZE_SLIDERS.sat.y = midY(585);
+  CUSTOMIZE_SLIDERS.light.y = midY(690);
   CUSTOMIZE_SLIDERS.hue.h = 12 * uiScale;
   CUSTOMIZE_SLIDERS.sat.h = 12 * uiScale;
   CUSTOMIZE_SLIDERS.light.h = 12 * uiScale;
 
-  CUSTOMIZE_BACK_BTN.y = midY(750);
+  CUSTOMIZE_BACK_BTN.y = midY(780);
   CUSTOMIZE_BACK_BTN.h = 60 * uiScale;
 
   AWARD.BADGE_Y = midY(640);

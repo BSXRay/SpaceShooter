@@ -453,10 +453,54 @@ function slider(p, label, value, valueText) {
   pixelRect(kx - 15, ky - 15, 30, 30, 7);
   ctx.stroke();
 
+function slider(p, label, value, valueText) {
+  // Label
+  text(label, 300, p.y - 40 * uiScale, 22);
+
+  // Track
+  const cut = Math.round(p.h / 2);
+
+  ctx.fillStyle = "rgba(10,14,28,.85)";
+  pixelRect(p.x, p.y, p.w, p.h, cut);
+  ctx.fill();
+
+  ctx.strokeStyle = "#3b4666";
+  ctx.lineWidth = 2;
+  pixelRect(p.x, p.y, p.w, p.h, cut);
+  ctx.stroke();
+
+  // Filled part
+  const w = Math.max(p.h, p.w * value);
+
+  const grad = ctx.createLinearGradient(p.x, 0, p.x + p.w, 0);
+  grad.addColorStop(0, "#3f7bd6");
+  grad.addColorStop(1, "#54ffc5");
+
+  ctx.fillStyle = grad;
+  pixelRect(p.x, p.y, w, p.h, cut);
+  ctx.fill();
+
+  // Knob: a square with stepped corners instead of a glowing circle.
+  const kx = p.x + p.w * value;
+  const ky = p.y + p.h / 2;
+
+  ctx.fillStyle = "rgba(3,5,12,.5)";
+  pixelRect(kx - 13, ky - 11, 30, 30, 7);
+  ctx.fill();
+
+  ctx.fillStyle = "#eaf6ff";
+  pixelRect(kx - 15, ky - 15, 30, 30, 7);
+  ctx.fill();
+
+  ctx.strokeStyle = "#7fb2ff";
+  ctx.lineWidth = 2;
+  pixelRect(kx - 15, ky - 15, 30, 30, 7);
+  ctx.stroke();
+
   // Value
   plainText(
     valueText !== undefined ? valueText : Math.round(value * 100) + "%",
-    300, p.y + 55 * uiScale, 18, "#c3c8dc"
+    300, p.y + 70 * uiScale, 18, "#c3c8dc"
   );
 }
 
