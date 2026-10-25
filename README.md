@@ -1,5 +1,5 @@
 # SpaceShooter
-SpaceShooter ist für meine schule und ist ein goofy ahh greenfoot game
+SpaceShooter ist für meine schule und ist ein goofy ahh greenfoot game (nicht mehr...)
 ## 🚀 Play SpaceShooter
 
 Play the game directly in your browser!
@@ -46,13 +46,6 @@ signed OTA updates and the release process.
 The Android app updates itself: it checks GitHub Releases on startup, verifies
 the download with a signature and installs the new version. To publish a change:
 
-```powershell
-git add -A
-git commit -m "feat: ..."
-git push origin main
-git tag v1.2.0
-git push origin v1.2.0
-```
 
 The tag makes GitHub Actions build the game, sign it, build the signed APK and
 publish the release. Installed apps pick the new version up on their next
