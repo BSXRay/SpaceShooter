@@ -337,7 +337,7 @@ function drawMenu() {
 
 
   // Draw the title banner using the shared asset loader.
-  // Preserve the image's aspect ratio and keep the text as a fallback.
+  // Preserve the image's aspect ratio.
   if (imageStatus.banner === "ok") {
     const img = imgs.banner;
     const bannerW = 420;
