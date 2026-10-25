@@ -335,7 +335,17 @@ function drawMenu() {
     return;
   }
 
-  text("SPACE SHOOTER", 300, midY(130), 42);
+
+  // Draw the title banner using the shared asset loader.
+  // Preserve the image's aspect ratio and keep the text as a fallback.
+  if (imageStatus.banner === "ok") {
+    const img = imgs.banner;
+    const bannerW = 420;
+    const bannerH = bannerW * (img.height / img.width);
+
+    drawImage("banner", 300, midY(130), bannerW, bannerH);
+  }
+
 
   const L = MENU_LAYOUT;
 

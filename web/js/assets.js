@@ -75,7 +75,8 @@ const imageNames = {
   alienExplosion: "boom.png",
   rapidFire: "RapidFire.png",
   spreadShot: "SpreadShot.png",
-  damageBoost: "DamageBoost.png"
+  damageBoost: "DamageBoost.png",
+  banner: "banner.png"
 };
 
 const imgs = {};
